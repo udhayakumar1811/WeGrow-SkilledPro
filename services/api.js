@@ -1,43 +1,43 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
-// Smart Fallback Base URLs (Primary: Wi-Fi IP, Secondary: Localhost/10.0.2.2)
-const PRIMARY_IP = "10.83.42.127";
-const BASE_URL = `http://${PRIMARY_IP}:4000/api/v1`;
+// AWS EC2 Deployed Live Backend API Base URL
+export const BASE_URL = "http://13.211.203.21/api/v1";
 
 const API = axios.create({
   baseURL: BASE_URL,
-  timeout: 15000, // 15 Seconds
+  timeout: 15000, // 15 Seconds Timeout
   headers: {
     "Content-Type": "application/json",
-    Accept: "application/json",
   },
 });
 
-// Request Interceptor
+// Request Interceptor: Attach JWT Bearer Token if logged in
 API.interceptors.request.use(
   async (config) => {
     try {
-      const token = await AsyncStorage.getItem("accessToken");
+      const token = await AsyncStorage.getItem("userToken");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
     } catch (error) {
-      console.log("Error fetching token:", error);
+      console.log("Error attaching auth token:", error);
     }
     return config;
   },
-  (error) => Promise.reject(error),
+  (error) => {
+    return Promise.reject(error);
+  },
 );
 
-// Response Interceptor
+// Response Interceptor: Handle errors globally
 API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      AsyncStorage.removeItem("accessToken");
+      console.log("Unauthorized / Token Expired");
     }
-    return Promise.reject(error);
+    return Promise.reject(error.response?.data || error);
   },
 );
 
