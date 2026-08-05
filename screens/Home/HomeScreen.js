@@ -1,4 +1,4 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -9,6 +9,7 @@ import {
   BackHandler,
   Dimensions,
   FlatList,
+  ImageBackground,
   Modal,
   RefreshControl,
   ScrollView,
@@ -30,20 +31,20 @@ const BASE_BANNERS = [
   {
     id: "1",
     type: "PASS",
-    title: "Monthly Offline Workshop Pass",
+    title: "Monthly Offline Pass",
     subtitle: "Unlimited Access to All Offline Workshops in Madurai & Sivakasi",
     btnText: "View Pass Details",
-    icon: "ticket-percent",
-    bgColor: COLORS.primary,
+    image:
+      "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=800",
   },
   {
     id: "2",
     type: "BENEFITS",
-    title: "Why Attend Our Offline Workshops?",
-    subtitle: "100% Practical Training • Real-time Projects • Industry Experts",
+    title: "Why Attend Workshops?",
+    subtitle: "100% Practical Training • Real-time Projects • Industry Mentors",
     btnText: "Explore Workshops",
-    icon: "school",
-    bgColor: "#1D5BB9",
+    image:
+      "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=800",
   },
   {
     id: "3",
@@ -52,26 +53,26 @@ const BASE_BANNERS = [
     subtitle:
       "Have questions? Talk to our experts or attend a free offline demo class!",
     btnText: "Enquire / Book Demo",
-    icon: "account-question",
-    bgColor: "#FF7A00",
+    image:
+      "https://images.unsplash.com/photo-1515187029135-18ee286d815b?q=80&w=800",
   },
   {
     id: "4",
     type: "PLACEMENT",
-    title: "Placement & Career Support",
-    subtitle: "98% Placement Rate • Resume Prep • Mock Interviews",
+    title: "Placement Support",
+    subtitle: "98% Placement Rate • Resume Prep • Mock HR Interviews",
     btnText: "Check Placements",
-    icon: "briefcase-check",
-    bgColor: "#0A3D91",
+    image:
+      "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800",
   },
   {
     id: "5",
     type: "BUSINESS",
-    title: "Business Growth & GST Workshops",
-    subtitle: "Exclusive Strategy & Growth Sessions for Entrepreneurs",
+    title: "Business & GST Growth",
+    subtitle: "Exclusive Strategy & Scaleup Sessions for Entrepreneurs",
     btnText: "Business Pass",
-    icon: "chart-line-variant",
-    bgColor: "#4C1D95",
+    image:
+      "https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=800",
   },
 ];
 
@@ -226,7 +227,7 @@ export default function HomeScreen() {
       setEnquiryForm({ name: "", phone: "", email: "", message: "" });
       Alert.alert(
         "Enquiry Sent! 🎉",
-        "Thank you for reaching out. Our team will contact you shortly for the Demo Session.",
+        "Thank you for reaching out. Our team will contact you shortly.",
       );
     }, 1000);
   };
@@ -282,7 +283,7 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* 1. Dynamic Header */}
+        {/* 1. Header with Logo & Login/Profile */}
         <View style={styles.header}>
           <View style={styles.logoHeaderWrapper}>
             <Image
@@ -293,7 +294,6 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.headerRightSection}>
-            {/* Notification Bell Icon */}
             <TouchableOpacity
               style={styles.iconBtn}
               onPress={() => router.push("/notification")}
@@ -305,7 +305,6 @@ export default function HomeScreen() {
               />
             </TouchableOpacity>
 
-            {/* Dynamic Profile Icon OR Login Button */}
             {userProfile ? (
               <TouchableOpacity
                 style={styles.userProfileBtn}
@@ -334,20 +333,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* 2. Hero Headline Banner */}
-        <View style={styles.heroBanner}>
-          <Text style={styles.heroBadge}>#1 SKILL TRAINING INSTITUTE</Text>
-          <Text style={styles.heroTitle}>
-            Build Your Career with{" "}
-            <Text style={{ color: COLORS.secondary }}>WeGrow</Text>
-          </Text>
-          <Text style={styles.heroSub}>
-            Industry-Ready Training • Placement Support • Offline Workshops in
-            Madurai & Sivakasi
-          </Text>
-        </View>
-
-        {/* 3. Smooth Infinite Carousel */}
+        {/* 2. Increased Height Carousel (Hero Banner Removed) */}
         <View style={styles.carouselWrapper}>
           <FlatList
             ref={flatListRef}
@@ -368,9 +354,12 @@ export default function HomeScreen() {
               setCurrentIndex(idx);
             }}
             renderItem={({ item }) => (
-              <View
-                style={[styles.carouselCard, { backgroundColor: item.bgColor }]}
+              <ImageBackground
+                source={{ uri: item.image }}
+                style={styles.carouselCard}
+                imageStyle={{ borderRadius: 16 }}
               >
+                <View style={styles.carouselOverlay} />
                 <View style={styles.carouselTextContainer}>
                   <Text style={styles.carouselTag}>WEGROW HIGHLIGHT</Text>
                   <Text style={styles.carouselTitle}>{item.title}</Text>
@@ -382,12 +371,7 @@ export default function HomeScreen() {
                     <Text style={styles.carouselBtnText}>{item.btnText}</Text>
                   </TouchableOpacity>
                 </View>
-                <MaterialCommunityIcons
-                  name={item.icon}
-                  size={52}
-                  color={COLORS.secondary}
-                />
-              </View>
+              </ImageBackground>
             )}
           />
 
@@ -401,7 +385,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* 4. TODAY / TOMORROW WORKSHOP HIGHLIGHT SECTION */}
+        {/* 3. Today / Tomorrow Workshops Highlight */}
         {highlightWorkshops.length > 0 && (
           <View style={styles.highlightSection}>
             <View style={styles.highlightHeader}>
@@ -470,9 +454,13 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* 5. Category Filter Tabs */}
+        {/* 4. Scrollable Category Filter Tabs (Fixes Overflow on Small Screens) */}
         {!userRole && (
-          <View style={styles.tabContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tabContainer}
+          >
             {["All", "Student", "Business"].map((tab) => (
               <TouchableOpacity
                 key={tab}
@@ -492,10 +480,10 @@ export default function HomeScreen() {
                 </Text>
               </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
         )}
 
-        {/* 6. Section Header */}
+        {/* 5. Section Header */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>
             {userRole
@@ -507,7 +495,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* 7. Workshops Cards */}
+        {/* 6. Workshops List */}
         {loading ? (
           <ActivityIndicator
             size="large"
@@ -576,7 +564,9 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   style={styles.bookBtn}
                   onPress={() =>
-                    router.push(`/workshop-details?id=${item._id || item.id}`)
+                    router.push(
+                      `/payment?id=${item._id || item.id}&amount=${item.price || 499}&title=${encodeURIComponent(item.title)}`,
+                    )
                   }
                 >
                   <Text style={styles.bookBtnText}>Book Offline Seat</Text>
@@ -585,10 +575,10 @@ export default function HomeScreen() {
             </View>
           ))
         )}
-        <View style={{ height: 100 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* Demo / Enquiry Modal Form */}
+      {/* Demo Enquiry Modal Form */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -750,51 +740,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  heroBanner: {
-    backgroundColor: COLORS.cardBg,
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  heroBadge: {
-    color: COLORS.primary,
-    fontSize: 10,
-    fontFamily: FONTS.bold,
-    backgroundColor: COLORS.secondaryLight,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    alignSelf: "flex-start",
-    marginBottom: 8,
-  },
-  heroTitle: {
-    color: COLORS.primary,
-    fontSize: 22,
-    fontFamily: FONTS.bold,
-  },
-  heroSub: {
-    color: COLORS.textSecondary,
-    fontSize: 12,
-    fontFamily: FONTS.regular,
-    marginTop: 6,
-    lineHeight: 18,
-  },
   carouselWrapper: {
     marginBottom: 20,
   },
   carouselCard: {
     width: width - 32,
+    height: 220, // Increased Height for Prominence
     borderRadius: 16,
-    padding: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    padding: 20,
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  carouselOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(10, 61, 145, 0.75)",
+    borderRadius: 16,
   },
   carouselTextContainer: {
-    flex: 1,
-    marginRight: 10,
+    zIndex: 10,
   },
   carouselTag: {
     color: COLORS.secondary,
@@ -804,13 +767,13 @@ const styles = StyleSheet.create({
   },
   carouselTitle: {
     color: COLORS.textWhite,
-    fontSize: 15,
+    fontSize: 18,
     fontFamily: FONTS.bold,
     marginTop: 4,
   },
   carouselSub: {
     color: COLORS.border,
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: FONTS.regular,
     marginTop: 4,
   },
@@ -942,9 +905,9 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
   },
   tabContainer: {
-    flexDirection: "row",
     gap: 10,
     marginBottom: 20,
+    paddingRight: 16,
   },
   tabBtn: {
     paddingVertical: 8,

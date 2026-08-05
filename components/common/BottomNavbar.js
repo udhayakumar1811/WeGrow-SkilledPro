@@ -1,12 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
 
 export default function BottomNavbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
 
   const navItems = [
     { name: "Home", route: "/home", icon: "home-outline", activeIcon: "home" },
@@ -31,7 +33,9 @@ export default function BottomNavbar() {
   ];
 
   return (
-    <View style={styles.bottomBar}>
+    <View
+      style={[styles.container, { paddingBottom: Math.max(insets.bottom, 12) }]}
+    >
       {navItems.map((item) => {
         const isActive = pathname === item.route;
         return (
@@ -39,19 +43,14 @@ export default function BottomNavbar() {
             key={item.name}
             style={styles.navItem}
             activeOpacity={0.7}
-            onPress={() => router.push(item.route)}
+            onPress={() => router.replace(item.route)}
           >
             <Ionicons
               name={isActive ? item.activeIcon : item.icon}
               size={22}
-              color={isActive ? COLORS.primary : COLORS.textSecondary}
+              color={isActive ? COLORS.primary : COLORS.placeholder}
             />
-            <Text
-              style={[
-                styles.navText,
-                { color: isActive ? COLORS.primary : COLORS.textSecondary },
-              ]}
-            >
+            <Text style={[styles.navText, isActive && styles.activeNavText]}>
               {item.name}
             </Text>
           </TouchableOpacity>
@@ -62,29 +61,37 @@ export default function BottomNavbar() {
 }
 
 const styles = StyleSheet.create({
-  bottomBar: {
+  container: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    height: 65,
+    flexDirection: "row",
     backgroundColor: COLORS.cardBg,
     borderTopWidth: 1,
-    borderColor: COLORS.border,
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    elevation: 20,
+    borderTopColor: COLORS.border,
+    paddingTop: 10,
+    paddingHorizontal: 16,
+    elevation: 8,
+    shadowColor: COLORS.textPrimary,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     zIndex: 1000,
   },
   navItem: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    flex: 1,
   },
   navText: {
-    fontSize: 10,
+    fontSize: 11,
+    color: COLORS.placeholder,
     fontFamily: FONTS.medium,
     marginTop: 3,
+  },
+  activeNavText: {
+    color: COLORS.primary,
+    fontFamily: FONTS.bold,
   },
 });

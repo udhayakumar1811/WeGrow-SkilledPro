@@ -6,7 +6,6 @@ import {
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
   BackHandler,
   ScrollView,
   StyleSheet,
@@ -39,8 +38,9 @@ export default function MembershipScreen() {
 
   const plans = {
     Student: {
+      id: "student_pass",
       title: "Student Unlimited Pass",
-      price: "₹999",
+      price: "999",
       period: "/ month",
       badge: "Save 60%",
       features: [
@@ -51,8 +51,9 @@ export default function MembershipScreen() {
       ],
     },
     Business: {
+      id: "business_pass",
       title: "Business Growth Pass",
-      price: "₹2,499",
+      price: "2499",
       period: "/ month",
       badge: "PRO Access",
       features: [
@@ -66,13 +67,20 @@ export default function MembershipScreen() {
 
   const currentPlan = plans[selectedPlan];
 
+  const handleSubscribe = () => {
+    // Navigate to Checkout Payment Page with Amount & Title
+    router.push(
+      `/payment?id=${currentPlan.id}&amount=${currentPlan.price}&title=${encodeURIComponent(currentPlan.title)}`,
+    );
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backBtn}
-            onPress={() => router.replace("/home")}
+            onPress={() => router.back()}
           >
             <Ionicons name="arrow-back" size={22} color={COLORS.primary} />
           </TouchableOpacity>
@@ -156,7 +164,7 @@ export default function MembershipScreen() {
             <Text style={styles.planTitle}>{currentPlan.title}</Text>
 
             <View style={styles.priceRow}>
-              <Text style={styles.price}>{currentPlan.price}</Text>
+              <Text style={styles.price}>₹{currentPlan.price}</Text>
               <Text style={styles.period}>{currentPlan.period}</Text>
             </View>
 
@@ -175,12 +183,7 @@ export default function MembershipScreen() {
 
             <TouchableOpacity
               style={styles.subscribeBtn}
-              onPress={() =>
-                Alert.alert(
-                  "Payment",
-                  `Initiating Payment for ${currentPlan.title}`,
-                )
-              }
+              onPress={handleSubscribe}
             >
               <Text style={styles.subscribeBtnText}>Subscribe Now</Text>
             </TouchableOpacity>

@@ -1,15 +1,16 @@
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Alert,
-    BackHandler,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  BackHandler,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
@@ -31,6 +32,19 @@ export default function HelpSupportScreen() {
       return () => subscription.remove();
     }, []),
   );
+
+  const openUrl = async (url) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        await Linking.openURL(url);
+      }
+    } catch (err) {
+      console.log("Error opening link:", err);
+    }
+  };
 
   const handleSubmit = () => {
     if (!query) {
@@ -55,39 +69,79 @@ export default function HelpSupportScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Contact Support Cards */}
-        <View style={styles.contactCard}>
-          <Ionicons name="call-outline" size={24} color={COLORS.primary} />
+        {/* Direct Contact Cards */}
+        <TouchableOpacity
+          style={styles.contactCard}
+          onPress={() => openUrl("https://wa.me/919363337331")}
+        >
+          <FontAwesome5 name="whatsapp" size={24} color="#22C55E" />
           <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={styles.contactTitle}>Call Us Directly</Text>
-            <Text style={styles.contactVal}>+91 93443 37331</Text>
+            <Text style={styles.contactTitle}>WhatsApp Support</Text>
+            <Text style={styles.contactVal}>+91 93633 37331</Text>
           </View>
-        </View>
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color={COLORS.textSecondary}
+          />
+        </TouchableOpacity>
 
-        <View style={styles.contactCard}>
+        <TouchableOpacity
+          style={styles.contactCard}
+          onPress={() => openUrl("mailto:wegrowskillcampus@gmail.com")}
+        >
           <Ionicons name="mail-outline" size={24} color={COLORS.primary} />
           <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={styles.contactTitle}>Email Support</Text>
-            <Text style={styles.contactVal}>enquiry@wegrowcampus.in</Text>
+            <Text style={styles.contactVal}>wegrowskillcampus@gmail.com</Text>
           </View>
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color={COLORS.textSecondary}
+          />
+        </TouchableOpacity>
+
+        {/* Social Media Links Section */}
+        <Text style={styles.sectionTitle}>Connect With Us</Text>
+        <View style={styles.socialRow}>
+          <TouchableOpacity
+            style={styles.socialBtn}
+            onPress={() =>
+              openUrl("https://www.instagram.com/wegrowskillcampus/")
+            }
+          >
+            <FontAwesome5 name="instagram" size={22} color="#E1306C" />
+            <Text style={styles.socialText}>Instagram</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.socialBtn}
+            onPress={() =>
+              openUrl("https://www.facebook.com/share/18xhrEHChh/")
+            }
+          >
+            <FontAwesome5 name="facebook" size={22} color="#1877F2" />
+            <Text style={styles.socialText}>Facebook</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.socialBtn}
+            onPress={() =>
+              openUrl("https://www.linkedin.com/company/wegrow-skill-campus/")
+            }
+          >
+            <FontAwesome5 name="linkedin" size={22} color="#0A66C2" />
+            <Text style={styles.socialText}>LinkedIn</Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.contactCard}>
-          <Ionicons name="location-outline" size={24} color={COLORS.primary} />
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={styles.contactTitle}>Offline Campus Center</Text>
-            <Text style={styles.contactVal}>
-              Madurai & Sivakasi, Tamil Nadu
-            </Text>
-          </View>
-        </View>
-
-        {/* Send Support Ticket */}
-        <Text style={styles.sectionTitle}>Send Us a Message</Text>
+        {/* Support Ticket Form */}
+        <Text style={styles.sectionTitle}>Send Us a Query</Text>
         <View style={styles.formBox}>
           <TextInput
             style={styles.textArea}
-            placeholder="Type your question, workshop issue or feedback here..."
+            placeholder="Type your question or issue here..."
             placeholderTextColor={COLORS.placeholder}
             multiline
             value={query}
@@ -97,6 +151,7 @@ export default function HelpSupportScreen() {
             <Text style={styles.submitBtnText}>Submit Support Request</Text>
           </TouchableOpacity>
         </View>
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -157,6 +212,26 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     marginTop: 16,
     marginBottom: 12,
+  },
+  socialRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 10,
+  },
+  socialBtn: {
+    flex: 1,
+    backgroundColor: COLORS.cardBg,
+    borderColor: COLORS.border,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    gap: 6,
+  },
+  socialText: {
+    color: COLORS.textPrimary,
+    fontSize: 11,
+    fontFamily: FONTS.bold,
   },
   formBox: {
     backgroundColor: COLORS.cardBg,
