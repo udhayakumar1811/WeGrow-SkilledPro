@@ -1,6 +1,6 @@
 import API from "./api";
 
-// 1. Fetch All Events/Workshops from API
+// 1. Get All Events / Workshops (with Pagination)
 export const getAllEventsAPI = async (page = 1, limit = 10) => {
   try {
     const response = await API.get(
@@ -12,7 +12,7 @@ export const getAllEventsAPI = async (page = 1, limit = 10) => {
   }
 };
 
-// 2. Fetch Event By ID
+// 2. Get Event Details By ID
 export const getEventByIdAPI = async (eventId) => {
   try {
     const response = await API.get(`/events/${eventId}`);
@@ -22,34 +22,20 @@ export const getEventByIdAPI = async (eventId) => {
   }
 };
 
-// 3. Create Booking
-export const createBookingAPI = async (eventId) => {
+// 3. Create New Event / Workshop
+export const createEventAPI = async (eventData) => {
   try {
-    const response = await API.post("/bookings/create-booking", {
-      event: eventId,
-    });
+    const response = await API.post("/events/create-event", eventData);
     return response.data;
   } catch (error) {
     throw error.response?.data || error;
   }
 };
 
-// 4. Get User My-Bookings
-export const getMyBookingsAPI = async (page = 1, limit = 10) => {
+// 4. Update Event / Workshop By ID
+export const updateEventAPI = async (eventId, updatedData) => {
   try {
-    const response = await API.get(
-      `/bookings/my-bookings?page=${page}&limit=${limit}`,
-    );
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error;
-  }
-};
-
-// 5. Cancel Booking
-export const cancelBookingAPI = async (bookingId) => {
-  try {
-    const response = await API.delete(`/bookings/${bookingId}`);
+    const response = await API.put(`/events/${eventId}`, updatedData);
     return response.data;
   } catch (error) {
     throw error.response?.data || error;

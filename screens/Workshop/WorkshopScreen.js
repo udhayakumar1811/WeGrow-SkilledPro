@@ -1,10 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
-import { useFocusEffect, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  BackHandler,
+  Alert,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,84 +21,160 @@ import { getAllEventsAPI } from "../../services/workshop";
 
 export default function WorkshopScreen() {
   const router = useRouter();
-  const [search, setSearch] = useState("");
   const [workshops, setWorkshops] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState("ALL"); // ALL, STUDENT, BUSINESS
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [userRole, setUserRole] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    checkUserAuthAndRole();
     fetchWorkshops();
   }, []);
 
-  // Phone Hardware Back Button -> Go to Home Screen
-  useFocusEffect(
-    React.useCallback(() => {
-      const onBackPress = () => {
-        router.replace("/home");
-        return true;
-      };
-
-      const subscription = BackHandler.addEventListener(
-        "hardwareBackPress",
-        onBackPress,
-      );
-      return () => subscription.remove();
-    }, []),
-  );
-
-  const fetchWorkshops = async () => {
-    setLoading(true);
+  // 1. Check Login Status and User Role
+  const checkUserAuthAndRole = async () => {
     try {
-      const res = await getAllEventsAPI(1, 20);
-      const data = res?.data || res?.events || res || [];
-      if (Array.isArray(data)) {
-        setWorkshops(data);
+      const token = await AsyncStorage.getItem("userToken");
+      const role = await AsyncStorage.getItem("userRole");
+
+      if (token) {
+        setIsLoggedIn(true);
+        setUserRole(role);
+
+        // Auto-filter based on Role if Logged In
+        if (role === "STUDENT") {
+          setSelectedFilter("STUDENT");
+        } else if (role === "BUSINESS") {
+          setSelectedFilter("BUSINESS");
+        }
+      } else {
+        setIsLoggedIn(false);
+        setUserRole(null);
+        setSelectedFilter("ALL");
       }
     } catch (error) {
-      console.log("Error fetching workshops API:", error);
-    } finally {
-      setLoading(false);
+      console.log("Error reading auth state:", error);
     }
   };
 
-  const filteredWorkshops = Array.isArray(workshops)
-    ? workshops.filter(
-        (item) =>
-          item.title?.toLowerCase().includes(search.toLowerCase()) ||
-          item.location?.toLowerCase().includes(search.toLowerCase()) ||
-          item.type?.toLowerCase().includes(search.toLowerCase()),
-      )
-    : [];
+  // 2. Fetch Events from AWS Server API
+  const fetchWorkshops = async () => {
+    try {
+      const res = await getAllEventsAPI(1, 20);
+
+      if (res?.success && Array.isArray(res?.data?.events)) {
+        setWorkshops(res.data.events);
+      } else if (Array.isArray(res?.events)) {
+        setWorkshops(res.events);
+      } else if (Array.isArray(res)) {
+        setWorkshops(res);
+      } else {
+        setWorkshops([]);
+      }
+    } catch (error) {
+      console.log("Error fetching workshops API:", error);
+      setWorkshops([]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    checkUserAuthAndRole();
+    fetchWorkshops();
+  };
+
+  const handleBackPress = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/home");
+    }
+  };
+
+  // 3. Navigate to Workshop Details Screen instead of Direct Payment
+  const handleOpenDetails = (item) => {
+    const eventId = item._id || item.id;
+    if (eventId) {
+      router.push(`/workshop-details?id=${eventId}`);
+    } else {
+      Alert.alert("Error", "Workshop details not available.");
+    }
+  };
+
+  // 4. Role and Search Based Filtering Logic
+  const filteredWorkshops = workshops.filter((item) => {
+    let matchesFilter = true;
+    if (userRole === "STUDENT") {
+      matchesFilter = item.type?.toUpperCase() === "STUDENT";
+    } else if (userRole === "BUSINESS") {
+      matchesFilter = item.type?.toUpperCase() === "BUSINESS";
+    } else {
+      matchesFilter =
+        selectedFilter === "ALL" || item.type?.toUpperCase() === selectedFilter;
+    }
+
+    const matchesSearch =
+      item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return matchesFilter && matchesSearch;
+  });
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <View style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[COLORS.primary]}
+          />
+        }
+      >
         {/* Header */}
         <View style={styles.header}>
-          {/* Header Back Arrow -> router.back() Goes to Previous Page */}
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={22} color={COLORS.primary} />
+          <TouchableOpacity style={styles.backBtn} onPress={handleBackPress}>
+            <Ionicons name="arrow-back" size={20} color={COLORS.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Offline Workshops</Text>
-          <TouchableOpacity onPress={fetchWorkshops}>
-            <Ionicons name="refresh-outline" size={22} color={COLORS.primary} />
+          <Text style={styles.headerTitle}>
+            {userRole === "STUDENT"
+              ? "Student Workshops"
+              : userRole === "BUSINESS"
+                ? "Business Workshops"
+                : "Offline Workshops"}
+          </Text>
+          <TouchableOpacity onPress={onRefresh}>
+            <Ionicons name="refresh" size={20} color={COLORS.primary} />
           </TouchableOpacity>
         </View>
 
-        {/* Search Input */}
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color={COLORS.placeholder} />
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Ionicons
+            name="search-outline"
+            size={18}
+            color={COLORS.placeholder}
+            style={styles.searchIcon}
+          />
           <TextInput
             style={styles.searchInput}
             placeholder="Search workshops in Madurai, AI, MERN..."
             placeholderTextColor={COLORS.placeholder}
-            value={search}
-            onChangeText={setSearch}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
           />
-          {search !== "" && (
-            <TouchableOpacity onPress={() => setSearch("")}>
+          {searchQuery !== "" && (
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
               <Ionicons
                 name="close-circle"
                 size={18}
@@ -106,68 +184,159 @@ export default function WorkshopScreen() {
           )}
         </View>
 
-        {/* List Content */}
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {loading ? (
-            <ActivityIndicator
-              size="large"
-              color={COLORS.primary}
-              style={{ marginVertical: 40 }}
-            />
-          ) : filteredWorkshops.length === 0 ? (
-            <View style={styles.noDataBox}>
-              <Ionicons
-                name="search-outline"
-                size={40}
-                color={COLORS.placeholder}
-              />
-              <Text style={styles.noDataText}>
-                No workshops found matching "{search}"
-              </Text>
-            </View>
-          ) : (
-            filteredWorkshops.map((item) => (
+        {/* Category Filter Tabs (Show Tabs only for Guests / Admins) */}
+        {!userRole && (
+          <View style={styles.filterRow}>
+            {[
+              { label: "All Sessions", value: "ALL" },
+              { label: "Student", value: "STUDENT" },
+              { label: "Business Pro", value: "BUSINESS" },
+            ].map((tab) => (
               <TouchableOpacity
-                key={item._id || item.id}
-                style={styles.card}
-                activeOpacity={0.8}
-                onPress={() =>
-                  router.push(`/workshop-details?id=${item._id || item.id}`)
-                }
+                key={tab.value}
+                style={[
+                  styles.filterBtn,
+                  selectedFilter === tab.value && styles.activeFilterBtn,
+                ]}
+                onPress={() => setSelectedFilter(tab.value)}
               >
-                <Image
-                  source={{
-                    uri:
-                      item.image ||
-                      "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=600",
-                  }}
-                  style={styles.image}
-                  contentFit="cover"
-                />
-                <View style={styles.cardContent}>
-                  <Text style={styles.title}>{item.title}</Text>
-                  <Text style={styles.info}>
-                    {item.date
-                      ? new Date(item.date).toLocaleDateString()
-                      : "Upcoming"}{" "}
-                    • {item.location || "Madurai"}
-                  </Text>
+                <Text
+                  style={[
+                    styles.filterText,
+                    selectedFilter === tab.value && styles.activeFilterText,
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
-                  <View style={styles.priceRow}>
-                    <Text style={styles.priceText}>
-                      Type: {item.type || "Offline"}
+        {/* Active Role Indicator Banner */}
+        {userRole && (
+          <View style={styles.roleBanner}>
+            <Ionicons
+              name="person-circle-outline"
+              size={16}
+              color={COLORS.primary}
+            />
+            <Text style={styles.roleBannerText}>
+              Showing exclusive workshops for{" "}
+              <Text style={{ fontFamily: FONTS.bold }}>{userRole}</Text> members
+            </Text>
+          </View>
+        )}
+
+        {/* Workshops List */}
+        {loading ? (
+          <ActivityIndicator
+            size="large"
+            color={COLORS.primary}
+            style={{ marginTop: 40 }}
+          />
+        ) : filteredWorkshops.length === 0 ? (
+          <View style={styles.noDataBox}>
+            <Ionicons
+              name="search-outline"
+              size={48}
+              color={COLORS.placeholder}
+            />
+            <Text style={styles.noDataTitle}>No workshops found</Text>
+            <Text style={styles.noDataSub}>
+              {searchQuery
+                ? `No results matching "${searchQuery}"`
+                : userRole
+                  ? `No active ${userRole} workshops available right now.`
+                  : "No workshops found for this category."}
+            </Text>
+          </View>
+        ) : (
+          filteredWorkshops.map((item) => (
+            <TouchableOpacity
+              key={item._id || item.id}
+              style={styles.card}
+              activeOpacity={0.9}
+              onPress={() => handleOpenDetails(item)}
+            >
+              <Image
+                source={{
+                  uri:
+                    item.image && item.image.startsWith("http")
+                      ? item.image
+                      : "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800",
+                }}
+                style={styles.cardImage}
+                contentFit="cover"
+              />
+
+              <View style={styles.typeBadge}>
+                <Text style={styles.typeBadgeText}>
+                  {item.type || "OFFLINE"}
+                </Text>
+              </View>
+
+              <View style={styles.cardBody}>
+                <Text style={styles.cardTitle}>{item.title}</Text>
+                <Text style={styles.cardDesc} numberOfLines={2}>
+                  {item.description}
+                </Text>
+
+                <View style={styles.infoGrid}>
+                  <View style={styles.infoItem}>
+                    <Ionicons
+                      name="location-outline"
+                      size={14}
+                      color={COLORS.secondary}
+                    />
+                    <Text style={styles.infoText}>
+                      {item.location || "Madurai"}
                     </Text>
-                    <Text style={styles.priceText}>
-                      Fee: ₹{item.price || "499"}
+                  </View>
+
+                  <View style={styles.infoItem}>
+                    <Ionicons
+                      name="calendar-outline"
+                      size={14}
+                      color={COLORS.secondary}
+                    />
+                    <Text style={styles.infoText}>
+                      {item.date
+                        ? new Date(item.date).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : "Upcoming"}
                     </Text>
                   </View>
                 </View>
-              </TouchableOpacity>
-            ))
-          )}
-          <View style={{ height: 100 }} />
-        </ScrollView>
-      </View>
+
+                <View style={styles.actionRow}>
+                  <View>
+                    <Text style={styles.priceLabel}>Seat Fee</Text>
+                    <Text style={styles.priceValue}>₹{item.price || 499}</Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.bookBtn}
+                    onPress={() => handleOpenDetails(item)}
+                  >
+                    <Text style={styles.bookBtnText}>Book Seat Now</Text>
+                    <Ionicons
+                      name="arrow-forward"
+                      size={14}
+                      color={COLORS.textWhite}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))
+        )}
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
 
       <BottomNavbar />
     </View>
@@ -178,19 +347,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 50,
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    justifyContent: "space-between",
+    marginBottom: 16,
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: COLORS.cardBg,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -198,75 +367,176 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   headerTitle: {
-    color: COLORS.textPrimary,
     fontSize: 18,
     fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
   },
-  searchBar: {
+  searchContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.border,
-    borderWidth: 1,
     borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginBottom: 20,
-    gap: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: 12,
+    height: 44,
+    marginBottom: 16,
+  },
+  searchIcon: {
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    color: COLORS.textPrimary,
-    fontSize: 14,
-    fontFamily: FONTS.regular,
-  },
-  noDataBox: {
-    padding: 40,
-    alignItems: "center",
-  },
-  noDataText: {
-    color: COLORS.textSecondary,
     fontSize: 13,
     fontFamily: FONTS.regular,
-    marginTop: 10,
+    color: COLORS.textPrimary,
+  },
+  filterRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 20,
+  },
+  filterBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: COLORS.cardBg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center",
+  },
+  activeFilterBtn: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  filterText: {
+    fontSize: 12,
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  activeFilterText: {
+    color: COLORS.textWhite,
+    fontFamily: FONTS.bold,
+  },
+  roleBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: COLORS.secondaryLight,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginBottom: 16,
+  },
+  roleBannerText: {
+    fontSize: 12,
+    fontFamily: FONTS.regular,
+    color: COLORS.primary,
   },
   card: {
     backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.border,
-    borderWidth: 1,
     borderRadius: 16,
     overflow: "hidden",
-    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 18,
   },
-  image: {
+  cardImage: {
     width: "100%",
-    height: 140,
+    height: 160,
   },
-  cardContent: {
-    padding: 16,
-  },
-  title: {
-    color: COLORS.textPrimary,
-    fontSize: 15,
-    fontFamily: FONTS.bold,
-  },
-  info: {
-    color: COLORS.textSecondary,
-    fontSize: 12,
-    fontFamily: FONTS.regular,
-    marginTop: 4,
-  },
-  priceRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 12,
-    backgroundColor: COLORS.background,
-    padding: 8,
+  typeBadge: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    paddingVertical: 4,
+    paddingHorizontal: 10,
     borderRadius: 8,
   },
-  priceText: {
-    color: COLORS.primary,
-    fontSize: 12,
+  typeBadgeText: {
+    fontSize: 10,
     fontFamily: FONTS.bold,
+    color: COLORS.primary,
+  },
+  cardBody: {
+    padding: 16,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: 6,
+  },
+  cardDesc: {
+    fontSize: 12,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginBottom: 12,
+    lineHeight: 18,
+  },
+  infoGrid: {
+    flexDirection: "row",
+    gap: 16,
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  infoItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  infoText: {
+    fontSize: 12,
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  actionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  priceLabel: {
+    fontSize: 10,
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  priceValue: {
+    fontSize: 18,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+  },
+  bookBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+  },
+  bookBtnText: {
+    fontSize: 13,
+    fontFamily: FONTS.bold,
+    color: COLORS.textWhite,
+  },
+  noDataBox: {
+    paddingVertical: 50,
+    alignItems: "center",
+  },
+  noDataTitle: {
+    fontSize: 16,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginTop: 12,
+  },
+  noDataSub: {
+    fontSize: 12,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginTop: 4,
+    textAlign: "center",
   },
 });

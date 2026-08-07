@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
@@ -23,17 +24,18 @@ export default function StudentRegisterScreen() {
   const [idCardImage, setIdCardImage] = useState(null);
 
   const [form, setForm] = useState({
-    firstName: "Udhaya",
-    lastName: "M",
-    email: "udhayakumar2959@gmail.com",
-    password: "Password@123",
-    phone: "6381582969",
-    college: "PSR Engineering college",
-    course: "BE",
-    department: "CSE",
-    year: "3rd Year",
-    city: "Madurai",
-    state: "Tamil Nadu",
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    phone: "",
+    college: "",
+    course: "",
+    department: "",
+    year: "",
+    skills: "React, Node",
+    city: "",
+    state: "",
   });
 
   const handleChange = (key, value) => {
@@ -42,7 +44,7 @@ export default function StudentRegisterScreen() {
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.8,
@@ -61,38 +63,68 @@ export default function StudentRegisterScreen() {
       !form.phone ||
       !form.college
     ) {
-      Alert.alert("Required Fields", "Please fill in all mandatory fields.");
+      Alert.alert(
+        "Required Fields",
+        "Please fill in all mandatory fields (*).",
+      );
       return;
     }
 
     if (!idCardImage) {
       Alert.alert(
-        "Verification Required",
-        "Please upload your College ID Card or Fees Receipt for verification.",
+        "ID Verification Required",
+        "Please upload your College ID Card Photo.",
       );
       return;
     }
 
     setLoading(true);
     try {
+      // Skills split into Array
+      const skillsArray = form.skills
+        ? form.skills.split(",").map((s) => s.trim())
+        : ["React", "Node"];
+
       const payload = {
-        ...form,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+        phone: form.phone,
+        college: form.college,
+        course: form.course || "B.E CSE",
+        department: form.department || "CSE",
+        year: form.year || "3rd Year",
+        skills: skillsArray,
         idCardUrl: idCardImage,
-        skills: ["React", "Node"],
+        city: form.city || "Madurai",
+        state: form.state || "Tamil Nadu",
       };
 
-      await registerStudentAPI(payload);
+      const res = await registerStudentAPI(payload);
 
-      Alert.alert(
-        "Success 🎉",
-        "Student Registration Successful! Your ID card will be verified soon.",
-        [{ text: "Go to Home", onPress: () => router.replace("/home") }],
-      );
+      if (res?.success) {
+        const token = res.data?.accessToken;
+        const user = res.data?.user;
+
+        if (token) {
+          await AsyncStorage.setItem("userToken", token);
+        }
+        if (user?.role) {
+          await AsyncStorage.setItem("userRole", user.role);
+        }
+
+        Alert.alert("Success 🎉", res.message || "Registration Successful!", [
+          { text: "Go to Home", onPress: () => router.replace("/home") },
+        ]);
+      } else {
+        Alert.alert("Registration Failed", res?.message || "Error occurred.");
+      }
     } catch (error) {
-      console.log("Registration Error:", error);
+      console.log("Student Register Error:", error);
       Alert.alert(
         "Registration Failed",
-        error?.message || "Server error. Please try again.",
+        error?.message || "Server Error. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -111,33 +143,37 @@ export default function StudentRegisterScreen() {
         prices.
       </Text>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>First Name *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="First Name"
-          placeholderTextColor={COLORS.placeholder}
-          value={form.firstName}
-          onChangeText={(v) => handleChange("firstName", v)}
-        />
+      {/* First Name & Last Name */}
+      <View style={styles.rowGroup}>
+        <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
+          <Text style={styles.label}>First Name *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="First Name"
+            placeholderTextColor={COLORS.placeholder}
+            value={form.firstName}
+            onChangeText={(v) => handleChange("firstName", v)}
+          />
+        </View>
+
+        <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
+          <Text style={styles.label}>Last Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Last Name"
+            placeholderTextColor={COLORS.placeholder}
+            value={form.lastName}
+            onChangeText={(v) => handleChange("lastName", v)}
+          />
+        </View>
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Last Name *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Last Name"
-          placeholderTextColor={COLORS.placeholder}
-          value={form.lastName}
-          onChangeText={(v) => handleChange("lastName", v)}
-        />
-      </View>
-
+      {/* Email Address */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Email Address *</Text>
         <TextInput
           style={styles.input}
-          placeholder="Email"
+          placeholder="e.g. raj@gmail.com"
           placeholderTextColor={COLORS.placeholder}
           keyboardType="email-address"
           autoCapitalize="none"
@@ -146,11 +182,12 @@ export default function StudentRegisterScreen() {
         />
       </View>
 
+      {/* Password */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Password *</Text>
         <TextInput
           style={styles.input}
-          placeholder="Password"
+          placeholder="Create Password"
           placeholderTextColor={COLORS.placeholder}
           secureTextEntry
           value={form.password}
@@ -158,11 +195,12 @@ export default function StudentRegisterScreen() {
         />
       </View>
 
+      {/* Phone Number */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Phone Number *</Text>
         <TextInput
           style={styles.input}
-          placeholder="Phone Number"
+          placeholder="10 Digit Mobile Number"
           placeholderTextColor={COLORS.placeholder}
           keyboardType="phone-pad"
           value={form.phone}
@@ -170,40 +208,69 @@ export default function StudentRegisterScreen() {
         />
       </View>
 
+      {/* College Name */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>College / Institution *</Text>
         <TextInput
           style={styles.input}
-          placeholder="College"
+          placeholder="e.g. Anna University"
           placeholderTextColor={COLORS.placeholder}
           value={form.college}
           onChangeText={(v) => handleChange("college", v)}
         />
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Course / Degree</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Course"
-          placeholderTextColor={COLORS.placeholder}
-          value={form.course}
-          onChangeText={(v) => handleChange("course", v)}
-        />
+      {/* Course & Department */}
+      <View style={styles.rowGroup}>
+        <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
+          <Text style={styles.label}>Course / Degree</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. B.E CSE"
+            placeholderTextColor={COLORS.placeholder}
+            value={form.course}
+            onChangeText={(v) => handleChange("course", v)}
+          />
+        </View>
+
+        <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
+          <Text style={styles.label}>Department</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. CSE"
+            placeholderTextColor={COLORS.placeholder}
+            value={form.department}
+            onChangeText={(v) => handleChange("department", v)}
+          />
+        </View>
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Department</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Department"
-          placeholderTextColor={COLORS.placeholder}
-          value={form.department}
-          onChangeText={(v) => handleChange("department", v)}
-        />
+      {/* Year & Skills */}
+      <View style={styles.rowGroup}>
+        <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
+          <Text style={styles.label}>Academic Year</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. 3rd Year"
+            placeholderTextColor={COLORS.placeholder}
+            value={form.year}
+            onChangeText={(v) => handleChange("year", v)}
+          />
+        </View>
+
+        <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
+          <Text style={styles.label}>Skills (Comma Separated)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. React, Node"
+            placeholderTextColor={COLORS.placeholder}
+            value={form.skills}
+            onChangeText={(v) => handleChange("skills", v)}
+          />
+        </View>
       </View>
 
-      {/* College ID Card Upload Field */}
+      {/* College ID Card Photo Upload */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>College ID Card / Hall Ticket Photo *</Text>
         <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
@@ -221,29 +288,31 @@ export default function StudentRegisterScreen() {
                 color={COLORS.primary}
               />
               <Text style={styles.uploadText}>
-                Tap to Upload College ID Card
+                Tap to Upload College ID Photo
               </Text>
             </View>
           )}
         </TouchableOpacity>
       </View>
 
+      {/* City & State */}
       <View style={styles.rowGroup}>
-        <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+        <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
           <Text style={styles.label}>City</Text>
           <TextInput
             style={styles.input}
-            placeholder="City"
+            placeholder="Madurai"
             placeholderTextColor={COLORS.placeholder}
             value={form.city}
             onChangeText={(v) => handleChange("city", v)}
           />
         </View>
-        <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
+
+        <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
           <Text style={styles.label}>State</Text>
           <TextInput
             style={styles.input}
-            placeholder="State"
+            placeholder="Tamil Nadu"
             placeholderTextColor={COLORS.placeholder}
             value={form.state}
             onChangeText={(v) => handleChange("state", v)}
@@ -251,6 +320,7 @@ export default function StudentRegisterScreen() {
         </View>
       </View>
 
+      {/* Submit Button */}
       <TouchableOpacity
         style={styles.submitBtn}
         onPress={handleRegister}
@@ -329,7 +399,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderStyle: "dashed",
     borderRadius: 12,
-    height: 120,
+    height: 130,
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",

@@ -1,5 +1,5 @@
-import WorkshopDetailsScreenComponent from "../screens/WorkshopDetails/WorkshopDetailsScreen";
+import WorkshopDetailsScreen from "../screens/WorkshopDetails/WorkshopDetailsScreen";
 
-export default function WorkshopDetails() {
-  return <WorkshopDetailsScreenComponent />;
+export default function WorkshopDetailsRoute() {
+  return <WorkshopDetailsScreen />;
 }

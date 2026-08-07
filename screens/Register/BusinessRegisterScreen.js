@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -23,17 +23,16 @@ export default function BusinessRegisterScreen() {
   const [visitingCardImage, setVisitingCardImage] = useState(null);
 
   const [form, setForm] = useState({
-    firstName: "Arun",
-    lastName: "Kumar",
-    email: "arun@gmail.com",
-    password: "Password@123",
-    phone: "9876543211",
-    companyName: "Tech Solutions",
-    gstNumber: "",
-    businessType: "Software Development",
-    designation: "Founder",
-    experience: 5,
-    website: "https://techsolutions.com",
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    phone: "",
+    companyName: "",
+    businessType: "",
+    designation: "",
+    experience: "5",
+    website: "",
     city: "Chennai",
     state: "Tamil Nadu",
   });
@@ -44,7 +43,7 @@ export default function BusinessRegisterScreen() {
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.8,
@@ -60,12 +59,13 @@ export default function BusinessRegisterScreen() {
       !form.firstName ||
       !form.email ||
       !form.password ||
+      !form.phone ||
       !form.companyName ||
       !form.businessType
     ) {
       Alert.alert(
         "Required Fields",
-        "Please fill in all mandatory business fields.",
+        "Please fill in all mandatory business fields (*).",
       );
       return;
     }
@@ -73,20 +73,46 @@ export default function BusinessRegisterScreen() {
     setLoading(true);
     try {
       const payload = {
-        ...form,
-        visitingCardUrl: visitingCardImage,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+        phone: form.phone,
+        city: form.city,
+        state: form.state,
+        companyName: form.companyName,
+        businessType: form.businessType,
+        designation: form.designation || "Founder",
+        experience: Number(form.experience) || 5,
+        website: form.website || "https://techsolutions.com",
       };
 
-      await registerBusinessAPI(payload);
+      const res = await registerBusinessAPI(payload);
 
-      Alert.alert("Success 🎉", "Business Registration Successful!", [
-        { text: "Go to Home", onPress: () => router.replace("/home") },
-      ]);
+      if (res?.success) {
+        const token = res.data?.accessToken;
+        const user = res.data?.user;
+
+        if (token) {
+          await AsyncStorage.setItem("userToken", token);
+        }
+        if (user?.role) {
+          await AsyncStorage.setItem("userRole", user.role);
+        }
+
+        Alert.alert(
+          "Success 🎉",
+          res.message || "Business Registration Successful!",
+          [{ text: "Go to Home", onPress: () => router.replace("/home") }],
+        );
+      } else {
+        Alert.alert("Registration Failed", res?.message || "Error occurred.");
+      }
     } catch (error) {
-      console.log("Registration Error:", error);
+      console.log("Business Register Error:", error);
       Alert.alert(
         "Registration Failed",
-        error?.message || "Server error. Try again.",
+        error?.message || "Server Error. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -104,33 +130,37 @@ export default function BusinessRegisterScreen() {
         Register your business to access growth & strategy offline workshops.
       </Text>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>First Name *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="First Name"
-          placeholderTextColor={COLORS.placeholder}
-          value={form.firstName}
-          onChangeText={(v) => handleChange("firstName", v)}
-        />
+      {/* First Name & Last Name */}
+      <View style={styles.rowGroup}>
+        <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
+          <Text style={styles.label}>First Name *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Arun"
+            placeholderTextColor={COLORS.placeholder}
+            value={form.firstName}
+            onChangeText={(v) => handleChange("firstName", v)}
+          />
+        </View>
+
+        <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
+          <Text style={styles.label}>Last Name *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Kumar"
+            placeholderTextColor={COLORS.placeholder}
+            value={form.lastName}
+            onChangeText={(v) => handleChange("lastName", v)}
+          />
+        </View>
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Last Name *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Last Name"
-          placeholderTextColor={COLORS.placeholder}
-          value={form.lastName}
-          onChangeText={(v) => handleChange("lastName", v)}
-        />
-      </View>
-
+      {/* Email Address */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Business Email *</Text>
         <TextInput
           style={styles.input}
-          placeholder="Business Email"
+          placeholder="arun@gmail.com"
           placeholderTextColor={COLORS.placeholder}
           keyboardType="email-address"
           autoCapitalize="none"
@@ -139,11 +169,12 @@ export default function BusinessRegisterScreen() {
         />
       </View>
 
+      {/* Password */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Password *</Text>
         <TextInput
           style={styles.input}
-          placeholder="Password"
+          placeholder="Create Password"
           placeholderTextColor={COLORS.placeholder}
           secureTextEntry
           value={form.password}
@@ -151,11 +182,12 @@ export default function BusinessRegisterScreen() {
         />
       </View>
 
+      {/* Phone Number */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Phone Number *</Text>
         <TextInput
           style={styles.input}
-          placeholder="Phone Number"
+          placeholder="9876543211"
           placeholderTextColor={COLORS.placeholder}
           keyboardType="phone-pad"
           value={form.phone}
@@ -163,90 +195,96 @@ export default function BusinessRegisterScreen() {
         />
       </View>
 
+      {/* Company Name */}
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Company / Business Name *</Text>
+        <Text style={styles.label}>Company Name *</Text>
         <TextInput
           style={styles.input}
-          placeholder="Company Name"
+          placeholder="Tech Solutions"
           placeholderTextColor={COLORS.placeholder}
           value={form.companyName}
           onChangeText={(v) => handleChange("companyName", v)}
         />
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>
-          GSTIN / Udyam MSME Registration (Optional)
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. 33AAAAA0000A1Z5"
-          placeholderTextColor={COLORS.placeholder}
-          autoCapitalize="characters"
-          value={form.gstNumber}
-          onChangeText={(v) => handleChange("gstNumber", v)}
-        />
+      {/* Business Type & Designation */}
+      <View style={styles.rowGroup}>
+        <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
+          <Text style={styles.label}>Business Type *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Software Development"
+            placeholderTextColor={COLORS.placeholder}
+            value={form.businessType}
+            onChangeText={(v) => handleChange("businessType", v)}
+          />
+        </View>
+
+        <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
+          <Text style={styles.label}>Designation</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Founder"
+            placeholderTextColor={COLORS.placeholder}
+            value={form.designation}
+            onChangeText={(v) => handleChange("designation", v)}
+          />
+        </View>
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Business Type / Industry *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Business Type"
-          placeholderTextColor={COLORS.placeholder}
-          value={form.businessType}
-          onChangeText={(v) => handleChange("businessType", v)}
-        />
+      {/* Experience & Website */}
+      <View style={styles.rowGroup}>
+        <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
+          <Text style={styles.label}>Experience (Years)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="5"
+            placeholderTextColor={COLORS.placeholder}
+            keyboardType="numeric"
+            value={form.experience}
+            onChangeText={(v) => handleChange("experience", v)}
+          />
+        </View>
+
+        <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
+          <Text style={styles.label}>Website URL</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="https://..."
+            placeholderTextColor={COLORS.placeholder}
+            autoCapitalize="none"
+            value={form.website}
+            onChangeText={(v) => handleChange("website", v)}
+          />
+        </View>
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Designation</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Designation"
-          placeholderTextColor={COLORS.placeholder}
-          value={form.designation}
-          onChangeText={(v) => handleChange("designation", v)}
-        />
+      {/* City & State */}
+      <View style={styles.rowGroup}>
+        <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
+          <Text style={styles.label}>City</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Chennai"
+            placeholderTextColor={COLORS.placeholder}
+            value={form.city}
+            onChangeText={(v) => handleChange("city", v)}
+          />
+        </View>
+
+        <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
+          <Text style={styles.label}>State</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Tamil Nadu"
+            placeholderTextColor={COLORS.placeholder}
+            value={form.state}
+            onChangeText={(v) => handleChange("state", v)}
+          />
+        </View>
       </View>
 
-      {/* Business Visiting Card Upload */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>
-          Business Visiting Card / ID Photo (Optional)
-        </Text>
-        <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
-          {visitingCardImage ? (
-            <Image
-              source={{ uri: visitingCardImage }}
-              style={styles.uploadedImage}
-              contentFit="cover"
-            />
-          ) : (
-            <View style={styles.uploadPlaceholder}>
-              <Ionicons
-                name="cloud-upload-outline"
-                size={28}
-                color={COLORS.primary}
-              />
-              <Text style={styles.uploadText}>Tap to Upload Visiting Card</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Website URL</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Website"
-          placeholderTextColor={COLORS.placeholder}
-          autoCapitalize="none"
-          value={form.website}
-          onChangeText={(v) => handleChange("website", v)}
-        />
-      </View>
-
+      {/* Submit Button */}
       <TouchableOpacity
         style={styles.submitBtn}
         onPress={handleRegister}
@@ -297,6 +335,9 @@ const styles = StyleSheet.create({
   inputGroup: {
     marginBottom: 16,
   },
+  rowGroup: {
+    flexDirection: "row",
+  },
   label: {
     color: COLORS.textSecondary,
     fontSize: 12,
@@ -313,30 +354,6 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     fontSize: 14,
     fontFamily: FONTS.regular,
-  },
-  uploadBox: {
-    backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.primary,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderRadius: 12,
-    height: 120,
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
-  },
-  uploadPlaceholder: {
-    alignItems: "center",
-    gap: 6,
-  },
-  uploadText: {
-    color: COLORS.primary,
-    fontSize: 12,
-    fontFamily: FONTS.medium,
-  },
-  uploadedImage: {
-    width: "100%",
-    height: "100%",
   },
   submitBtn: {
     backgroundColor: COLORS.primary,

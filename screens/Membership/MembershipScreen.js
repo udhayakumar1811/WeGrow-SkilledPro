@@ -1,12 +1,7 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import {
-  FontAwesome5,
-  Ionicons,
-  MaterialCommunityIcons,
-} from "@expo/vector-icons";
-import { useFocusEffect, useRouter } from "expo-router";
-import React, { useState } from "react";
-import {
-  BackHandler,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,178 +14,73 @@ import { FONTS } from "../../constants/fonts";
 
 export default function MembershipScreen() {
   const router = useRouter();
-  const [selectedPlan, setSelectedTab] = useState("Student");
 
-  useFocusEffect(
-    React.useCallback(() => {
-      const onBackPress = () => {
-        router.replace("/home");
-        return true;
-      };
-
-      const subscription = BackHandler.addEventListener(
-        "hardwareBackPress",
-        onBackPress,
-      );
-      return () => subscription.remove();
-    }, []),
-  );
-
-  const plans = {
-    Student: {
-      id: "student_pass",
-      title: "Student Unlimited Pass",
-      price: "999",
-      period: "/ month",
-      badge: "Save 60%",
-      features: [
-        "Unlimited Access to All Student Offline Workshops",
-        "Free Learning Materials & Code Bundles",
-        "Direct Mentorship with Industry Experts",
-        "Verified Certificate of Completion",
+  const handleBuyPass = (passTitle, price) => {
+    Alert.alert(
+      "Monthly Offline Pass",
+      `Proceed to purchase ${passTitle} for ₹${price}?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Proceed to Pay",
+          onPress: () =>
+            router.push(
+              `/payment?id=PASS_MONTHLY&amount=${price}&title=${encodeURIComponent(passTitle)}`,
+            ),
+        },
       ],
-    },
-    Business: {
-      id: "business_pass",
-      title: "Business Growth Pass",
-      price: "2499",
-      period: "/ month",
-      badge: "PRO Access",
-      features: [
-        "Access to Strategy, GST & Marketing Workshops",
-        "1-on-1 Business Growth Consultation",
-        "Exclusive VIP Networking Dinner Entry",
-        "Custom Business Growth Kit & Certificate",
-      ],
-    },
-  };
-
-  const currentPlan = plans[selectedPlan];
-
-  const handleSubscribe = () => {
-    // Navigate to Checkout Payment Page with Amount & Title
-    router.push(
-      `/payment?id=${currentPlan.id}&amount=${currentPlan.price}&title=${encodeURIComponent(currentPlan.title)}`,
     );
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <View style={styles.container}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={22} color={COLORS.primary} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Monthly Pass</Text>
-          <View style={{ width: 40 }} />
+          <Text style={styles.headerTitle}>Monthly Offline Pass</Text>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.banner}>
-            <MaterialCommunityIcons
-              name="crown"
-              size={48}
-              color={COLORS.secondary}
-            />
-            <Text style={styles.bannerTitle}>Unlock Unlimited Learning</Text>
-            <Text style={styles.bannerSub}>
-              Subscribe monthly & attend all offline workshops for free in
-              Madurai.
-            </Text>
+        {/* Highlight Card */}
+        <View style={styles.heroPassCard}>
+          <View style={styles.passBadge}>
+            <Text style={styles.passBadgeText}>UNLIMITED ACCESS</Text>
           </View>
+          <Text style={styles.passCardTitle}>WeGrow Offline Pass</Text>
+          <Text style={styles.passCardSub}>
+            Attend all Student & Business Workshops in Madurai & Sivakasi
+            without paying every session!
+          </Text>
+          <Text style={styles.passPrice}>₹1,999 / month</Text>
+        </View>
 
-          <View style={styles.toggleContainer}>
-            <TouchableOpacity
-              style={[
-                styles.toggleBtn,
-                selectedPlan === "Student" && styles.activeToggleBtn,
-              ]}
-              onPress={() => setSelectedTab("Student")}
-            >
-              <FontAwesome5
-                name="user-graduate"
-                size={14}
-                color={
-                  selectedPlan === "Student"
-                    ? COLORS.textWhite
-                    : COLORS.textSecondary
-                }
-              />
-              <Text
-                style={[
-                  styles.toggleText,
-                  selectedPlan === "Student" && styles.activeToggleText,
-                ]}
-              >
-                Student Pass
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.toggleBtn,
-                selectedPlan === "Business" && styles.activeToggleBtn,
-              ]}
-              onPress={() => setSelectedTab("Business")}
-            >
-              <FontAwesome5
-                name="briefcase"
-                size={14}
-                color={
-                  selectedPlan === "Business"
-                    ? COLORS.textWhite
-                    : COLORS.textSecondary
-                }
-              />
-              <Text
-                style={[
-                  styles.toggleText,
-                  selectedPlan === "Business" && styles.activeToggleText,
-                ]}
-              >
-                Business Pass
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.planCard}>
-            <View style={styles.badgeTag}>
-              <Text style={styles.badgeText}>{currentPlan.badge}</Text>
+        {/* Benefits Section */}
+        <Text style={styles.sectionTitle}>Pass Benefits</Text>
+        <View style={styles.benefitsList}>
+          {[
+            "Free Seat Reservation in all Workshops",
+            "Priority Front Row Seating",
+            "1-on-1 Mentorship & Career Guidance",
+            "Verified Physical Completion Certificate",
+            "Exclusive WhatsApp VIP Group Access",
+          ].map((benefit, idx) => (
+            <View key={idx} style={styles.benefitItem}>
+              <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+              <Text style={styles.benefitText}>{benefit}</Text>
             </View>
+          ))}
+        </View>
 
-            <Text style={styles.planTitle}>{currentPlan.title}</Text>
+        {/* Purchase Pass Action */}
+        <TouchableOpacity
+          style={styles.buyPassBtn}
+          onPress={() => handleBuyPass("Monthly Offline Pass", "1999")}
+        >
+          <Text style={styles.buyPassText}>Get Monthly Pass (₹1,999)</Text>
+          <Ionicons name="arrow-forward" size={16} color={COLORS.textWhite} />
+        </TouchableOpacity>
 
-            <View style={styles.priceRow}>
-              <Text style={styles.price}>₹{currentPlan.price}</Text>
-              <Text style={styles.period}>{currentPlan.period}</Text>
-            </View>
-
-            <View style={styles.divider} />
-
-            {currentPlan.features.map((feature, idx) => (
-              <View key={idx} style={styles.featureRow}>
-                <Ionicons
-                  name="checkmark-circle"
-                  size={20}
-                  color={COLORS.secondary}
-                />
-                <Text style={styles.featureText}>{feature}</Text>
-              </View>
-            ))}
-
-            <TouchableOpacity
-              style={styles.subscribeBtn}
-              onPress={handleSubscribe}
-            >
-              <Text style={styles.subscribeBtnText}>Subscribe Now</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={{ height: 100 }} />
-        </ScrollView>
-      </View>
+        <View style={{ height: 100 }} />
+      </ScrollView>
 
       <BottomNavbar />
     </View>
@@ -201,158 +91,92 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 50,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.cardBg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: "center",
-    justifyContent: "center",
+    marginBottom: 16,
   },
   headerTitle: {
-    color: COLORS.textPrimary,
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
   },
-  banner: {
-    backgroundColor: COLORS.primary,
+  heroPassCard: {
+    backgroundColor: "#0F2C59",
     borderRadius: 16,
     padding: 20,
-    alignItems: "center",
     marginBottom: 20,
   },
-  bannerTitle: {
-    color: COLORS.textWhite,
-    fontSize: 18,
-    fontFamily: FONTS.bold,
-    marginTop: 8,
+  passBadge: {
+    backgroundColor: "#F97316",
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+    marginBottom: 8,
   },
-  bannerSub: {
-    color: COLORS.border,
+  passBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 9,
+    fontFamily: FONTS.bold,
+  },
+  passCardTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontFamily: FONTS.bold,
+  },
+  passCardSub: {
+    color: "#CBD5E1",
     fontSize: 12,
     fontFamily: FONTS.regular,
-    textAlign: "center",
     marginTop: 4,
     lineHeight: 18,
   },
-  toggleContainer: {
-    flexDirection: "row",
+  passPrice: {
+    color: "#F97316",
+    fontSize: 22,
+    fontFamily: FONTS.bold,
+    marginTop: 14,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: 12,
+  },
+  benefitsList: {
+    gap: 12,
     backgroundColor: COLORS.cardBg,
-    borderRadius: 12,
+    padding: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: 4,
     marginBottom: 20,
   },
-  toggleBtn: {
+  benefitItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  benefitText: {
+    fontSize: 13,
+    fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
     flex: 1,
+  },
+  buyPassBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 10,
-  },
-  activeToggleBtn: {
-    backgroundColor: COLORS.primary,
-  },
-  toggleText: {
-    color: COLORS.textSecondary,
-    fontSize: 13,
-    fontFamily: FONTS.medium,
-  },
-  activeToggleText: {
-    color: COLORS.textWhite,
-    fontFamily: FONTS.bold,
-  },
-  planCard: {
-    backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.border,
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 20,
-    position: "relative",
-    marginBottom: 20,
-    elevation: 2,
-    shadowColor: COLORS.textPrimary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-  },
-  badgeTag: {
-    position: "absolute",
-    top: 16,
-    right: 16,
-    backgroundColor: COLORS.secondaryLight,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-  },
-  badgeText: {
-    color: COLORS.secondary,
-    fontSize: 10,
-    fontFamily: FONTS.bold,
-  },
-  planTitle: {
-    color: COLORS.textPrimary,
-    fontSize: 18,
-    fontFamily: FONTS.bold,
-    marginTop: 10,
-  },
-  priceRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    marginTop: 8,
-  },
-  price: {
-    color: COLORS.primary,
-    fontSize: 32,
-    fontFamily: FONTS.bold,
-  },
-  period: {
-    color: COLORS.textSecondary,
-    fontSize: 14,
-    fontFamily: FONTS.regular,
-    marginLeft: 6,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.border,
-    marginVertical: 16,
-  },
-  featureRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 12,
-  },
-  featureText: {
-    color: COLORS.textPrimary,
-    fontSize: 13,
-    fontFamily: FONTS.medium,
-    flex: 1,
-  },
-  subscribeBtn: {
     backgroundColor: COLORS.primary,
     paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: "center",
-    marginTop: 20,
+    borderRadius: 12,
+    gap: 8,
   },
-  subscribeBtnText: {
+  buyPassText: {
     color: COLORS.textWhite,
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: FONTS.bold,
   },
 });

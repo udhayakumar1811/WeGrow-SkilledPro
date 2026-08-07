@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -181,7 +181,7 @@ export default function HomeScreen() {
   const fetchEvents = async () => {
     try {
       const res = await getAllEventsAPI(1, 20);
-      const data = res?.data || res?.events || res || [];
+      const data = res?.data?.events || res?.events || res?.data || res || [];
       if (Array.isArray(data)) {
         setWorkshops(data);
       } else {
@@ -232,29 +232,6 @@ export default function HomeScreen() {
     }, 1000);
   };
 
-  const getHighlightWorkshops = () => {
-    if (!Array.isArray(workshops) || workshops.length === 0) return [];
-
-    const today = new Date();
-    const tomorrow = new Date();
-    tomorrow.setDate(today.getDate() + 1);
-
-    const todayStr = today.toISOString().split("T")[0];
-    const tomorrowStr = tomorrow.toISOString().split("T")[0];
-
-    const todaysWorkshops = workshops.filter((w) => {
-      if (!w.date) return false;
-      const wDate = new Date(w.date).toISOString().split("T")[0];
-      return wDate === todayStr || wDate === tomorrowStr;
-    });
-
-    if (todaysWorkshops.length > 0) return todaysWorkshops;
-
-    return workshops.slice(0, 2);
-  };
-
-  const highlightWorkshops = getHighlightWorkshops();
-
   const getWorkshopsToDisplay = () => {
     if (!Array.isArray(workshops)) return [];
     if (userRole === "STUDENT") {
@@ -283,7 +260,7 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* 1. Header with Logo & Login/Profile */}
+        {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoHeaderWrapper}>
             <Image
@@ -333,7 +310,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* 2. Increased Height Carousel (Hero Banner Removed) */}
+        {/* Carousel Banner */}
         <View style={styles.carouselWrapper}>
           <FlatList
             ref={flatListRef}
@@ -385,122 +362,23 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* 3. Today / Tomorrow Workshops Highlight */}
-        {highlightWorkshops.length > 0 && (
-          <View style={styles.highlightSection}>
-            <View style={styles.highlightHeader}>
-              <View style={styles.liveBadge}>
-                <View style={styles.liveDot} />
-                <Text style={styles.liveBadgeText}>HAPPENING SOON</Text>
-              </View>
-              <Text style={styles.highlightTitle}>
-                Today / Tomorrow Sessions
-              </Text>
-            </View>
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 12 }}
-            >
-              {highlightWorkshops.map((item) => (
-                <TouchableOpacity
-                  key={item._id || item.id}
-                  style={styles.highlightCard}
-                  activeOpacity={0.85}
-                  onPress={() =>
-                    router.push(`/workshop-details?id=${item._id || item.id}`)
-                  }
-                >
-                  <View style={styles.highlightBadge}>
-                    <Text style={styles.highlightBadgeText}>
-                      {item.type || "SPECIAL"}
-                    </Text>
-                  </View>
-                  <Text style={styles.highlightCardTitle} numberOfLines={2}>
-                    {item.title}
-                  </Text>
-                  <View style={styles.highlightInfoRow}>
-                    <Ionicons
-                      name="calendar-outline"
-                      size={13}
-                      color={COLORS.secondary}
-                    />
-                    <Text style={styles.highlightInfoText}>
-                      {item.date
-                        ? new Date(item.date).toLocaleDateString()
-                        : "Today"}
-                    </Text>
-                  </View>
-                  <View style={styles.highlightInfoRow}>
-                    <Ionicons
-                      name="location-outline"
-                      size={13}
-                      color={COLORS.secondary}
-                    />
-                    <Text style={styles.highlightInfoText}>
-                      {item.location || "Madurai"}
-                    </Text>
-                  </View>
-                  <View style={styles.highlightPriceRow}>
-                    <Text style={styles.highlightPriceText}>
-                      ₹{item.price || "499"}
-                    </Text>
-                    <Text style={styles.highlightBookText}>Book Seat →</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {/* 4. Scrollable Category Filter Tabs (Fixes Overflow on Small Screens) */}
-        {!userRole && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.tabContainer}
-          >
-            {["All", "Student", "Business"].map((tab) => (
-              <TouchableOpacity
-                key={tab}
-                style={[
-                  styles.tabBtn,
-                  selectedTab === tab && styles.activeTabBtn,
-                ]}
-                onPress={() => setSelectedTab(tab)}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    selectedTab === tab && styles.activeTabText,
-                  ]}
-                >
-                  {tab === "All" ? "All Workshops" : `${tab} Special`}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
-
-        {/* 5. Section Header */}
+        {/* Horizontal Workshops */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>
-            {userRole
-              ? `${userRole} Offline Workshops`
-              : "Upcoming Offline Workshops"}
+            {userRole === "BUSINESS"
+              ? "BUSINESS Offline Workshops"
+              : "STUDENT Offline Workshops"}
           </Text>
           <TouchableOpacity onPress={() => router.push("/workshops")}>
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
         </View>
 
-        {/* 6. Workshops List */}
         {loading ? (
           <ActivityIndicator
-            size="large"
+            size="small"
             color={COLORS.primary}
-            style={{ marginVertical: 30 }}
+            style={{ marginVertical: 20 }}
           />
         ) : displayedWorkshops.length === 0 ? (
           <View style={styles.noDataBox}>
@@ -514,71 +392,261 @@ export default function HomeScreen() {
             </Text>
           </View>
         ) : (
-          displayedWorkshops.map((item) => (
-            <View key={item._id || item.id} style={styles.workshopCard}>
-              <Image
-                source={{
-                  uri:
-                    item.image ||
-                    "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=600",
-                }}
-                style={styles.workshopImg}
-                contentFit="cover"
-              />
-              <View style={styles.badgeTag}>
-                <Text style={styles.badgeText}>{item.type || "Offline"}</Text>
-              </View>
-
-              <View style={styles.cardContent}>
-                <Text style={styles.workshopTitle}>{item.title}</Text>
-
-                <View style={styles.infoRow}>
-                  <Ionicons
-                    name="calendar-outline"
-                    size={15}
-                    color={COLORS.secondary}
-                  />
-                  <Text style={styles.infoText}>
-                    {item.date
-                      ? new Date(item.date).toLocaleDateString()
-                      : "Upcoming"}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalScrollContainer}
+          >
+            {displayedWorkshops.map((item) => (
+              <TouchableOpacity
+                key={item._id || item.id}
+                style={styles.horizCard}
+                activeOpacity={0.9}
+                onPress={() =>
+                  router.push(`/workshop-details?id=${item._id || item.id}`)
+                }
+              >
+                <Image
+                  source={{
+                    uri:
+                      item.image && item.image.startsWith("http")
+                        ? item.image
+                        : "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800",
+                  }}
+                  style={styles.horizCardImg}
+                  contentFit="cover"
+                />
+                <View style={styles.horizBadgeTag}>
+                  <Text style={styles.horizBadgeText}>
+                    {item.type || "STUDENT"}
                   </Text>
                 </View>
 
-                <View style={styles.infoRow}>
+                <View style={styles.horizCardContent}>
+                  <Text style={styles.horizTitle} numberOfLines={1}>
+                    {item.title}
+                  </Text>
+                  <Text style={styles.horizDesc} numberOfLines={2}>
+                    {item.description}
+                  </Text>
+
+                  <View style={styles.horizInfoRow}>
+                    <View style={styles.infoMeta}>
+                      <Ionicons
+                        name="location-outline"
+                        size={12}
+                        color={COLORS.secondary}
+                      />
+                      <Text style={styles.infoMetaText}>
+                        {item.location || "Madurai"}
+                      </Text>
+                    </View>
+                    <View style={styles.infoMeta}>
+                      <Ionicons
+                        name="calendar-outline"
+                        size={12}
+                        color={COLORS.secondary}
+                      />
+                      <Text style={styles.infoMetaText}>
+                        {item.date
+                          ? new Date(item.date).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                            })
+                          : "15 Sep"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.horizPriceRow}>
+                    <View>
+                      <Text style={styles.seatFeeText}>Seat Fee</Text>
+                      <Text style={styles.priceValText}>
+                        ₹{item.price || "999"}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.horizBookBtn}
+                      onPress={() =>
+                        router.push(
+                          `/workshop-details?id=${item._id || item.id}`,
+                        )
+                      }
+                    >
+                      <Text style={styles.horizBookBtnText}>
+                        Book Seat Now →
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+
+        {/* Popular Categories */}
+        <Text
+          style={[styles.sectionTitle, { marginTop: 24, marginBottom: 14 }]}
+        >
+          Popular Categories
+        </Text>
+        <View style={styles.categoryGrid}>
+          {[
+            {
+              title: "Full Stack",
+              sub: "Development",
+              icon: "laptop-code",
+              color: "#DBEAFE",
+            },
+            {
+              title: "Python",
+              sub: "Programming",
+              icon: "python",
+              color: "#FEF3C7",
+            },
+            {
+              title: "UI/UX",
+              sub: "Design",
+              icon: "palette",
+              color: "#F3E8FF",
+            },
+            {
+              title: "AI & ML",
+              sub: "Artificial Intelligence",
+              icon: "brain",
+              color: "#DCFCE7",
+            },
+            {
+              title: "Data Analytics",
+              sub: "& Science",
+              icon: "chart-bar",
+              color: "#FFEDD5",
+            },
+            {
+              title: "Cloud",
+              sub: "Computing",
+              icon: "cloud",
+              color: "#E0F2FE",
+            },
+          ].map((cat, idx) => (
+            <TouchableOpacity
+              key={idx}
+              style={styles.categoryCard}
+              onPress={() => router.push("/workshops")}
+            >
+              <View
+                style={[styles.catIconCircle, { backgroundColor: cat.color }]}
+              >
+                <FontAwesome5
+                  name={cat.icon}
+                  size={18}
+                  color={COLORS.primary}
+                />
+              </View>
+              <Text style={styles.catTitleText}>{cat.title}</Text>
+              <Text style={styles.catSubText}>{cat.sub}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Upcoming Workshops */}
+        <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+          <Text style={styles.sectionTitle}>Upcoming Workshops</Text>
+          <TouchableOpacity onPress={() => router.push("/workshops")}>
+            <Text style={styles.seeAllText}>See All</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.upcomingContainer}>
+          {workshops.slice(0, 3).map((item, index) => (
+            <View key={item._id || item.id || index} style={styles.upcomingRow}>
+              <View style={styles.upcomingLogoBox}>
+                <Ionicons name="code-slash" size={18} color={COLORS.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.upcomingTitleText}>{item.title}</Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 4,
+                    marginTop: 2,
+                  }}
+                >
                   <Ionicons
                     name="location-outline"
-                    size={15}
-                    color={COLORS.secondary}
+                    size={11}
+                    color={COLORS.textSecondary}
                   />
-                  <Text style={styles.infoText}>
+                  <Text style={styles.upcomingSubText}>
                     {item.location || "Madurai"}
                   </Text>
                 </View>
-
-                <View style={styles.priceRow}>
-                  <Text style={styles.priceLabel}>Workshop Fee:</Text>
-                  <Text style={styles.priceVal}>₹{item.price || "499"}</Text>
+              </View>
+              <View style={{ alignItems: "flex-end", gap: 6 }}>
+                <View
+                  style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+                >
+                  <Ionicons
+                    name="calendar-outline"
+                    size={11}
+                    color={COLORS.textSecondary}
+                  />
+                  <Text style={styles.upcomingDateText}>
+                    {item.date
+                      ? new Date(item.date).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                        })
+                      : "10 Sep"}
+                  </Text>
                 </View>
-
                 <TouchableOpacity
-                  style={styles.bookBtn}
+                  style={styles.registerOutlineBtn}
                   onPress={() =>
-                    router.push(
-                      `/payment?id=${item._id || item.id}&amount=${item.price || 499}&title=${encodeURIComponent(item.title)}`,
-                    )
+                    router.push(`/workshop-details?id=${item._id || item.id}`)
                   }
                 >
-                  <Text style={styles.bookBtnText}>Book Offline Seat</Text>
+                  <Text style={styles.registerOutlineBtnText}>Register</Text>
                 </TouchableOpacity>
               </View>
             </View>
-          ))
-        )}
+          ))}
+        </View>
+
+        {/* Why Choose WeGrow */}
+        <Text
+          style={[styles.sectionTitle, { marginTop: 24, marginBottom: 14 }]}
+        >
+          Why Choose WeGrow?
+        </Text>
+        <View style={styles.whyGrid}>
+          {[
+            {
+              title: "100% Practical",
+              sub: "Training",
+              icon: "shield-checkmark-outline",
+            },
+            { title: "Industry", sub: "Experts", icon: "people-outline" },
+            {
+              title: "Certificate",
+              sub: "After Completion",
+              icon: "ribbon-outline",
+            },
+            { title: "Placement", sub: "Support", icon: "briefcase-outline" },
+          ].map((feature, i) => (
+            <View key={i} style={styles.whyCard}>
+              <Ionicons name={feature.icon} size={24} color={COLORS.primary} />
+              <Text style={styles.whyTitleText}>{feature.title}</Text>
+              <Text style={styles.whySubText}>{feature.sub}</Text>
+            </View>
+          ))}
+        </View>
+
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* Demo Enquiry Modal Form */}
+      {/* Demo Enquiry Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -745,7 +813,7 @@ const styles = StyleSheet.create({
   },
   carouselCard: {
     width: width - 32,
-    height: 220, // Increased Height for Prominence
+    height: 200,
     borderRadius: 16,
     padding: 20,
     justifyContent: "flex-end",
@@ -807,231 +875,236 @@ const styles = StyleSheet.create({
     width: 20,
     backgroundColor: COLORS.primary,
   },
-  highlightSection: {
-    marginBottom: 20,
-    backgroundColor: "#FFF7ED",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#FFEDD5",
-  },
-  highlightHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-    gap: 8,
-  },
-  liveBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FF7A00",
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-    gap: 4,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.textWhite,
-  },
-  liveBadgeText: {
-    color: COLORS.textWhite,
-    fontSize: 9,
-    fontFamily: FONTS.bold,
-  },
-  highlightTitle: {
-    color: COLORS.textPrimary,
-    fontSize: 14,
-    fontFamily: FONTS.bold,
-  },
-  highlightCard: {
-    width: 230,
-    backgroundColor: COLORS.cardBg,
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  highlightBadge: {
-    backgroundColor: COLORS.secondaryLight,
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-    alignSelf: "flex-start",
-    marginBottom: 6,
-  },
-  highlightBadgeText: {
-    color: COLORS.secondary,
-    fontSize: 9,
-    fontFamily: FONTS.bold,
-  },
-  highlightCardTitle: {
-    color: COLORS.textPrimary,
-    fontSize: 13,
-    fontFamily: FONTS.bold,
-    marginBottom: 8,
-    height: 36,
-  },
-  highlightInfoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 4,
-  },
-  highlightInfoText: {
-    color: COLORS.textSecondary,
-    fontSize: 11,
-    fontFamily: FONTS.regular,
-  },
-  highlightPriceRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderColor: COLORS.border,
-  },
-  highlightPriceText: {
-    color: COLORS.primary,
-    fontSize: 14,
-    fontFamily: FONTS.bold,
-  },
-  highlightBookText: {
-    color: COLORS.secondary,
-    fontSize: 11,
-    fontFamily: FONTS.bold,
-  },
-  tabContainer: {
-    gap: 10,
-    marginBottom: 20,
-    paddingRight: 16,
-  },
-  tabBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: COLORS.cardBg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  activeTabBtn: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  tabText: {
-    color: COLORS.textSecondary,
-    fontSize: 12,
-    fontFamily: FONTS.medium,
-  },
-  activeTabText: {
-    color: COLORS.textWhite,
-    fontFamily: FONTS.bold,
-  },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   sectionTitle: {
     color: COLORS.textPrimary,
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: FONTS.bold,
   },
   seeAllText: {
     color: COLORS.primary,
-    fontSize: 13,
-    fontFamily: FONTS.medium,
+    fontSize: 12,
+    fontFamily: FONTS.bold,
   },
   noDataBox: {
     padding: 30,
     alignItems: "center",
-  },
-  noDataText: {
-    color: COLORS.textSecondary,
-    fontSize: 13,
-    fontFamily: FONTS.regular,
-    marginTop: 8,
-  },
-  workshopCard: {
     backgroundColor: COLORS.cardBg,
-    borderRadius: 16,
-    overflow: "hidden",
-    marginBottom: 20,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  workshopImg: {
-    width: "100%",
-    height: 160,
-  },
-  badgeTag: {
-    position: "absolute",
-    top: 12,
-    left: 12,
-    backgroundColor: COLORS.cardBg,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    borderColor: COLORS.secondary,
-    borderWidth: 1,
-  },
-  badgeText: {
-    color: COLORS.secondary,
-    fontSize: 10,
-    fontFamily: FONTS.bold,
-  },
-  cardContent: {
-    padding: 16,
-  },
-  workshopTitle: {
-    color: COLORS.textPrimary,
-    fontSize: 16,
-    fontFamily: FONTS.bold,
-    marginBottom: 8,
-  },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 6,
-  },
-  infoText: {
+  noDataText: {
     color: COLORS.textSecondary,
     fontSize: 12,
     fontFamily: FONTS.regular,
+    marginTop: 8,
   },
-  priceRow: {
+  horizontalScrollContainer: {
+    gap: 14,
+    paddingRight: 16,
+  },
+  horizCard: {
+    width: width * 0.7,
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: "hidden",
+  },
+  horizCardImg: {
+    width: "100%",
+    height: 120,
+  },
+  horizBadgeTag: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+  },
+  horizBadgeText: {
+    fontSize: 9,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+  },
+  horizCardContent: {
+    padding: 12,
+  },
+  horizTitle: {
+    fontSize: 14,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: 4,
+  },
+  horizDesc: {
+    fontSize: 11,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginBottom: 10,
+  },
+  horizInfoRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 10,
+  },
+  infoMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  infoMetaText: {
+    fontSize: 10,
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  horizPriceRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: COLORS.background,
-    padding: 10,
-    borderRadius: 10,
-    marginVertical: 12,
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: 8,
   },
-  priceLabel: {
+  seatFeeText: {
+    fontSize: 9,
     color: COLORS.textSecondary,
-    fontSize: 12,
     fontFamily: FONTS.medium,
   },
-  priceVal: {
+  priceValText: {
+    fontSize: 14,
+    fontFamily: FONTS.bold,
     color: COLORS.primary,
-    fontSize: 14,
-    fontFamily: FONTS.bold,
   },
-  bookBtn: {
+  horizBookBtn: {
     backgroundColor: COLORS.primary,
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
   },
-  bookBtnText: {
+  horizBookBtnText: {
     color: COLORS.textWhite,
-    fontSize: 14,
+    fontSize: 10,
     fontFamily: FONTS.bold,
+  },
+  categoryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  categoryCard: {
+    width: (width - 42) / 3,
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  catIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+  catTitleText: {
+    fontSize: 11,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    textAlign: "center",
+  },
+  catSubText: {
+    fontSize: 9,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    textAlign: "center",
+    marginTop: 1,
+  },
+  upcomingContainer: {
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: 14,
+  },
+  upcomingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    gap: 10,
+  },
+  upcomingLogoBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: COLORS.secondaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  upcomingTitleText: {
+    fontSize: 12,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  upcomingSubText: {
+    fontSize: 10,
+    color: COLORS.textSecondary,
+    fontFamily: FONTS.regular,
+  },
+  upcomingDateText: {
+    fontSize: 10,
+    color: COLORS.textSecondary,
+    fontFamily: FONTS.medium,
+  },
+  registerOutlineBtn: {
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    paddingVertical: 3,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+  },
+  registerOutlineBtnText: {
+    color: COLORS.primary,
+    fontSize: 10,
+    fontFamily: FONTS.bold,
+  },
+  whyGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  whyCard: {
+    width: (width - 42) / 2,
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 12,
+    padding: 14,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  whyTitleText: {
+    fontSize: 11,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginTop: 6,
+    textAlign: "center",
+  },
+  whySubText: {
+    fontSize: 10,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    textAlign: "center",
   },
   modalOverlay: {
     flex: 1,

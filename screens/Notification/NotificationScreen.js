@@ -1,87 +1,61 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useRouter } from "expo-router";
-import React from "react";
+import { useRouter } from "expo-router";
 import {
-    BackHandler,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
 
-const NOTIFICATIONS = [
-  {
-    id: "1",
-    title: "Seat Confirmed! 🎉",
-    message:
-      'Your offline seat for "AI & MERN Bootcamp" in Madurai is confirmed for Aug 15.',
-    time: "2 hours ago",
-    unread: true,
-  },
-  {
-    id: "2",
-    title: "Monthly Pass Renewal",
-    message:
-      "Your Student Pass expires in 3 days. Renew now for unlimited workshop access.",
-    time: "1 day ago",
-    unread: false,
-  },
-  {
-    id: "3",
-    title: "New Business Workshop Added",
-    message:
-      "GST & Scaleup strategy workshop for entrepreneurs is live for booking.",
-    time: "2 days ago",
-    unread: false,
-  },
-];
-
 export default function NotificationScreen() {
   const router = useRouter();
 
-  useFocusEffect(
-    React.useCallback(() => {
-      const onBackPress = () => {
-        router.replace("/home");
-        return true;
-      };
-      const subscription = BackHandler.addEventListener(
-        "hardwareBackPress",
-        onBackPress,
-      );
-      return () => subscription.remove();
-    }, []),
-  );
+  const handleBackPress = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/home");
+    }
+  };
+
+  const notifications = [
+    {
+      id: "1",
+      title: "Welcome Offer Unlocked! 🎉",
+      desc: "Your first offline workshop is 100% FREE! Book your seat now.",
+      time: "Just now",
+    },
+    {
+      id: "2",
+      title: "New AI & ML Workshop Added 🤖",
+      desc: "Hands-on Machine Learning workshop in Hyderabad scheduled for 10th Oct.",
+      time: "2 hours ago",
+    },
+  ];
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => router.replace("/home")}
-        >
-          <Ionicons name="arrow-back" size={22} color={COLORS.primary} />
+        <TouchableOpacity style={styles.backBtn} onPress={handleBackPress}>
+          <Ionicons name="arrow-back" size={20} color={COLORS.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>
-        <View style={{ width: 40 }} />
+        <View style={{ width: 36 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {NOTIFICATIONS.map((item) => (
-          <View
-            key={item.id}
-            style={[styles.card, item.unread && styles.unreadCard]}
-          >
+        {notifications.map((item) => (
+          <View key={item.id} style={styles.notifyCard}>
             <View style={styles.iconCircle}>
-              <Ionicons name="notifications" size={20} color={COLORS.primary} />
+              <Ionicons name="notifications" size={18} color={COLORS.primary} />
             </View>
-            <View style={styles.content}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.message}>{item.message}</Text>
-              <Text style={styles.time}>{item.time}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.notifyTitle}>{item.title}</Text>
+              <Text style={styles.notifyDesc}>{item.desc}</Text>
+              <Text style={styles.notifyTime}>{item.time}</Text>
             </View>
           </View>
         ))}
@@ -94,19 +68,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 50,
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 20,
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: COLORS.cardBg,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -114,50 +88,43 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   headerTitle: {
-    color: COLORS.textPrimary,
     fontSize: 18,
     fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
   },
-  card: {
-    backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.border,
-    borderWidth: 1,
-    borderRadius: 14,
-    padding: 16,
+  notifyCard: {
     flexDirection: "row",
+    gap: 12,
+    backgroundColor: COLORS.cardBg,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     marginBottom: 12,
   },
-  unreadCard: {
-    borderColor: COLORS.primary,
-  },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: COLORS.secondaryLight,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
   },
-  content: {
-    flex: 1,
-  },
-  title: {
-    color: COLORS.textPrimary,
-    fontSize: 14,
+  notifyTitle: {
+    fontSize: 13,
     fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
   },
-  message: {
+  notifyDesc: {
+    fontSize: 11,
+    fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
-    fontSize: 12,
-    fontFamily: FONTS.regular,
-    marginTop: 4,
-    lineHeight: 18,
+    marginTop: 2,
   },
-  time: {
+  notifyTime: {
+    fontSize: 9,
+    fontFamily: FONTS.medium,
     color: COLORS.placeholder,
-    fontSize: 10,
-    fontFamily: FONTS.regular,
     marginTop: 6,
   },
 });
