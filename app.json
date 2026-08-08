@@ -2,14 +2,12 @@
   "expo": {
     "name": "WeGrow Skill Campus",
     "slug": "wegrow-skill-campus",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "scheme": "wegrow",
     "orientation": "portrait",
     "icon": "./assets/logo/logo_square.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/logo/logo_square.png",
-      "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {

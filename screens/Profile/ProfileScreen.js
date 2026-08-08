@@ -87,7 +87,7 @@ export default function ProfileScreen() {
             {/* Navigation Options */}
             <Text style={styles.sectionLabel}>ACCOUNT & BOOKINGS</Text>
 
-            {/* My Bookings Button */}
+            {/* My Bookings */}
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => router.push("/my-bookings")}
@@ -100,6 +100,47 @@ export default function ProfileScreen() {
                 />
               </View>
               <Text style={styles.menuText}>My Workshop Bookings</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={COLORS.textSecondary}
+              />
+            </TouchableOpacity>
+
+            {/* NEW: Rewards & Referrals */}
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => router.push("/rewards")}
+            >
+              <View style={styles.menuIconBox}>
+                <Ionicons
+                  name="gift-outline"
+                  size={20}
+                  color={COLORS.primary}
+                />
+              </View>
+              <Text style={styles.menuText}>Rewards & Referrals</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={COLORS.textSecondary}
+              />
+            </TouchableOpacity>
+
+            {/* NEW: Community Members */}
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => router.push("/members")}
+            >
+              <View style={styles.menuIconBox}>
+                <Ionicons
+                  name="people-outline"
+                  size={20}
+                  color={COLORS.primary}
+                />
+              </View>
+
+              <Text style={styles.menuText}>WeGrow Community Members</Text>
               <Ionicons
                 name="chevron-forward"
                 size={18}
@@ -263,7 +304,7 @@ const styles = StyleSheet.create({
   menuText: {
     flex: 1,
     color: COLORS.textPrimary,
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: FONTS.medium,
     marginLeft: 12,
   },

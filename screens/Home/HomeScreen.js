@@ -205,7 +205,7 @@ export default function HomeScreen() {
     if (banner.type === "DEMO") {
       setModalVisible(true);
     } else if (banner.type === "PASS") {
-      router.push("/membership");
+      router.push("/pass");
     } else {
       router.push("/workshops");
     }
@@ -484,7 +484,7 @@ export default function HomeScreen() {
           </ScrollView>
         )}
 
-        {/* Popular Categories */}
+        {/* Popular Categories (Aligned in 3 Columns x 2 Rows) */}
         <Text
           style={[styles.sectionTitle, { marginTop: 24, marginBottom: 14 }]}
         >
@@ -531,7 +531,7 @@ export default function HomeScreen() {
           ].map((cat, idx) => (
             <TouchableOpacity
               key={idx}
-              style={styles.categoryCard}
+              style={styles.categoryCardThreeCol}
               onPress={() => router.push("/workshops")}
             >
               <View
@@ -539,12 +539,16 @@ export default function HomeScreen() {
               >
                 <FontAwesome5
                   name={cat.icon}
-                  size={18}
+                  size={16}
                   color={COLORS.primary}
                 />
               </View>
-              <Text style={styles.catTitleText}>{cat.title}</Text>
-              <Text style={styles.catSubText}>{cat.sub}</Text>
+              <Text style={styles.catTitleText} numberOfLines={1}>
+                {cat.title}
+              </Text>
+              <Text style={styles.catSubText} numberOfLines={1}>
+                {cat.sub}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -997,33 +1001,36 @@ const styles = StyleSheet.create({
   categoryGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    justifyContent: "space-between",
+    gap: 8,
   },
-  categoryCard: {
-    width: (width - 42) / 3,
+  categoryCardThreeCol: {
+    width: (width - 48) / 3, // 3 Columns x 2 Rows Alignment
     backgroundColor: COLORS.cardBg,
     borderRadius: 12,
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 6,
     alignItems: "center",
     borderWidth: 1,
     borderColor: COLORS.border,
-  },
-  catIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
     marginBottom: 8,
   },
+  catIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 6,
+  },
   catTitleText: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
     textAlign: "center",
   },
   catSubText: {
-    fontSize: 9,
+    fontSize: 8,
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
     textAlign: "center",
