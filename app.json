@@ -5,10 +5,10 @@
     "version": "1.0.4",
     "scheme": "wegrow",
     "orientation": "portrait",
-    "icon": "./assets/logo/logo_header.png",
+    "icon": "./assets/logo/logo_square.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/logo/logo_header.png",
+      "image": "./assets/logo/logo_square.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,7 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo/logo_header.png",
+        "foregroundImage": "./assets/logo/logo_square.png",
         "backgroundColor": "#ffffff"
       },
       "usesCleartextTraffic": true,
