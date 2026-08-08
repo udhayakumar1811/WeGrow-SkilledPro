@@ -6,14 +6,14 @@ export const BASE_URL = "http://13.239.234.181:4000/api/v1";
 
 const API = axios.create({
   baseURL: BASE_URL,
-  timeout: 30000,
+  timeout: 30000, // 30 Seconds Timeout for slower mobile networks
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
 });
 
-// Request Interceptor: Attach JWT Bearer Token if logged in
+// Request Interceptor: Attach JWT Bearer Token automatically
 API.interceptors.request.use(
   async (config) => {
     try {
@@ -29,7 +29,7 @@ API.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// Response Interceptor
+// Response Interceptor: Uniform Error Handling
 API.interceptors.response.use(
   (response) => response,
   (error) => {
