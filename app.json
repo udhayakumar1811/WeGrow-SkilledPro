@@ -20,8 +20,25 @@
         "foregroundImage": "./assets/logo/logo_header.png",
         "backgroundColor": "#ffffff"
       },
-      "usesCleartextTraffic": true
+      "usesCleartextTraffic": true,
+      "package": "com.wegrowworkshop.wegrowskillcampus"
     },
-    "plugins": ["expo-router"]
+    "plugins": [
+      "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d0aafb5b-8bd1-4128-953a-3980768a3139"
+      }
+    }
   }
 }
