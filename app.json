@@ -8,6 +8,8 @@
     "icon": "./assets/logo/logo_square.png",
     "userInterfaceStyle": "light",
     "splash": {
+      "image": "./assets/logo/logo_square.png",
+      "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
