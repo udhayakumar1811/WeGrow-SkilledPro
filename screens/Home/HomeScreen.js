@@ -105,39 +105,42 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       flatListRef.current?.scrollToIndex({
         index: BASE_BANNERS.length,
         animated: false,
       });
     }, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      let nextIndex = currentIndex + 1;
+      setCurrentIndex((prevIndex) => {
+        const nextIndex = prevIndex + 1;
 
-      flatListRef.current?.scrollToIndex({
-        index: nextIndex,
-        animated: true,
+        flatListRef.current?.scrollToIndex({
+          index: nextIndex,
+          animated: true,
+        });
+
+        if (nextIndex >= BASE_BANNERS.length * 2) {
+          setTimeout(() => {
+            const resetIndex = BASE_BANNERS.length;
+            flatListRef.current?.scrollToIndex({
+              index: resetIndex,
+              animated: false,
+            });
+            setCurrentIndex(resetIndex);
+          }, 500);
+        }
+
+        return nextIndex;
       });
-
-      setCurrentIndex(nextIndex);
-
-      if (nextIndex >= BASE_BANNERS.length * 2) {
-        setTimeout(() => {
-          let resetIndex = BASE_BANNERS.length;
-          flatListRef.current?.scrollToIndex({
-            index: resetIndex,
-            animated: false,
-          });
-          setCurrentIndex(resetIndex);
-        }, 500);
-      }
     }, 3500);
 
     return () => clearInterval(timer);
-  }, [currentIndex]);
+  }, []);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -324,6 +327,14 @@ export default function HomeScreen() {
               offset: (width - 32) * index,
               index,
             })}
+            onScrollToIndexFailed={(info) => {
+              setTimeout(() => {
+                flatListRef.current?.scrollToIndex({
+                  index: info.index,
+                  animated: false,
+                });
+              }, 100);
+            }}
             onMomentumScrollEnd={(e) => {
               const idx = Math.round(
                 e.nativeEvent.contentOffset.x / (width - 32),
@@ -484,7 +495,7 @@ export default function HomeScreen() {
           </ScrollView>
         )}
 
-        {/* Popular Categories (Aligned in 3 Columns x 2 Rows) */}
+        {/* Popular Categories */}
         <Text
           style={[styles.sectionTitle, { marginTop: 24, marginBottom: 14 }]}
         >
@@ -563,7 +574,10 @@ export default function HomeScreen() {
 
         <View style={styles.upcomingContainer}>
           {workshops.slice(0, 3).map((item, index) => (
-            <View key={item._id || item.id || index} style={styles.upcomingRow}>
+            <View
+              key={item._id || item.id || `upcoming-${index}`}
+              style={styles.upcomingRow}
+            >
               <View style={styles.upcomingLogoBox}>
                 <Ionicons name="code-slash" size={18} color={COLORS.primary} />
               </View>
@@ -1005,7 +1019,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   categoryCardThreeCol: {
-    width: (width - 48) / 3, // 3 Columns x 2 Rows Alignment
+    width: (width - 48) / 3,
     backgroundColor: COLORS.cardBg,
     borderRadius: 12,
     paddingVertical: 12,
@@ -1104,29 +1118,29 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
-    marginTop: 6,
     textAlign: "center",
+    marginTop: 8,
   },
   whySubText: {
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
     textAlign: "center",
+    marginTop: 2,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
+    padding: 16,
   },
   modalContent: {
     width: "100%",
     backgroundColor: COLORS.cardBg,
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    elevation: 5,
   },
   modalHeader: {
     flexDirection: "row",
@@ -1135,47 +1149,46 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   modalTitle: {
-    color: COLORS.textPrimary,
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
   },
   modalSub: {
-    color: COLORS.textSecondary,
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
     marginBottom: 16,
-    lineHeight: 18,
   },
   inputGroup: {
     marginBottom: 12,
   },
   label: {
-    color: COLORS.textSecondary,
     fontSize: 11,
     fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
     marginBottom: 4,
   },
   input: {
     backgroundColor: COLORS.background,
-    borderColor: COLORS.border,
     borderWidth: 1,
-    borderRadius: 10,
+    borderColor: COLORS.border,
+    borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: COLORS.textPrimary,
-    fontSize: 13,
+    paddingVertical: 8,
+    fontSize: 12,
     fontFamily: FONTS.regular,
+    color: COLORS.textPrimary,
   },
   submitEnquiryBtn: {
     backgroundColor: COLORS.primary,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 8,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 8,
   },
   submitEnquiryText: {
     color: COLORS.textWhite,
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: FONTS.bold,
   },
 });

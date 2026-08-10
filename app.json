@@ -5,24 +5,28 @@
     "version": "1.0.5",
     "scheme": "wegrow",
     "orientation": "portrait",
+
     "icon": "./assets/logo/logo_square.png",
+
     "userInterfaceStyle": "light",
+
     "splash": {
-      "image": "./assets/logo/logo_square.png",
-      "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+
     "ios": {
       "supportsTablet": true
     },
+
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo/logo_square.png",
+        "foregroundImage": "./assets/logo/logo_adaptive_foreground.png",
         "backgroundColor": "#ffffff"
       },
       "usesCleartextTraffic": true,
       "package": "com.wegrowworkshop.wegrowskillcampus"
     },
+
     "plugins": [
       "expo-router",
       [
@@ -34,6 +38,7 @@
         }
       ]
     ],
+
     "extra": {
       "router": {},
       "eas": {

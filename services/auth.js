@@ -52,3 +52,24 @@ export const getUserProfileAPI = async () => {
     throw error.response?.data || error;
   }
 };
+
+// 6. Forgot Password API
+export const forgotPasswordAPI = async (email) => {
+  try {
+    const response = await API.post("/users/forgot-password", { email });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+// 7. Reset Password API
+export const resetPasswordAPI = async (resetData) => {
+  try {
+    // resetData payload: { token, newPassword, confirmPassword }
+    const response = await API.post("/users/reset-password", resetData);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};

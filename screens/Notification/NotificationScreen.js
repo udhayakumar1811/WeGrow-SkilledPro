@@ -1,65 +1,127 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
-  ScrollView,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { COLORS } from "../../constants/colors";
-import { FONTS } from "../../constants/fonts";
+import {
+  getNotificationsAPI,
+  markNotificationAsReadAPI,
+} from "../../services/notification";
 
 export default function NotificationScreen() {
-  const router = useRouter();
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const handleBackPress = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace("/home");
+  const fetchNotifications = async () => {
+    try {
+      const res = await getNotificationsAPI(1, 20);
+      // Assuming res.data or res contains array of notifications
+      const list = Array.isArray(res)
+        ? res
+        : res.data || res.notifications || [];
+      setNotifications(list);
+    } catch (error) {
+      console.log("Error fetching notifications:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  const notifications = [
-    {
-      id: "1",
-      title: "Welcome Offer Unlocked! 🎉",
-      desc: "Your first offline workshop is 100% FREE! Book your seat now.",
-      time: "Just now",
-    },
-    {
-      id: "2",
-      title: "New AI & ML Workshop Added 🤖",
-      desc: "Hands-on Machine Learning workshop in Hyderabad scheduled for 10th Oct.",
-      time: "2 hours ago",
-    },
-  ];
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const handleNotificationPress = async (item) => {
+    // If unread, mark as read
+    if (!item.isRead && !item.read) {
+      try {
+        await markNotificationAsReadAPI(item._id || item.id);
+        // Update local state instantly so badge decreases
+        setNotifications((prev) =>
+          prev.map((notif) =>
+            (notif._id || notif.id) === (item._id || item.id)
+              ? { ...notif, isRead: true, read: true }
+              : notif,
+          ),
+        );
+      } catch (err) {
+        console.log("Error marking as read:", err);
+      }
+    }
+  };
+
+  const renderItem = ({ item }) => {
+    const isRead = item.isRead || item.read;
+
+    return (
+      <TouchableOpacity
+        style={[styles.card, !isRead && styles.unreadCard]}
+        onPress={() => handleNotificationPress(item)}
+      >
+        <View style={styles.iconContainer}>
+          <Ionicons
+            name={isRead ? "notifications-outline" : "notifications"}
+            size={24}
+            color={isRead ? "#64748B" : "#0A3D91"}
+          />
+        </View>
+
+        <View style={styles.textContainer}>
+          <Text style={[styles.title, !isRead && styles.unreadTitle]}>
+            {item.title || "Notification"}
+          </Text>
+          <Text style={styles.message}>{item.message || item.description}</Text>
+          {item.createdAt && (
+            <Text style={styles.time}>
+              {new Date(item.createdAt).toLocaleDateString()}
+            </Text>
+          )}
+        </View>
+
+        {!isRead && <View style={styles.unreadDot} />}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={handleBackPress}>
-          <Ionicons name="arrow-back" size={20} color={COLORS.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notifications</Text>
-        <View style={{ width: 36 }} />
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {notifications.map((item) => (
-          <View key={item.id} style={styles.notifyCard}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="notifications" size={18} color={COLORS.primary} />
+      {loading ? (
+        <ActivityIndicator
+          style={{ marginTop: 40 }}
+          size="large"
+          color="#0A3D91"
+        />
+      ) : (
+        <FlatList
+          data={notifications}
+          keyExtractor={(item, index) =>
+            item._id || item.id || index.toString()
+          }
+          renderItem={renderItem}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                setRefreshing(true);
+                fetchNotifications();
+              }}
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No notifications found.</Text>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.notifyTitle}>{item.title}</Text>
-              <Text style={styles.notifyDesc}>{item.desc}</Text>
-              <Text style={styles.notifyTime}>{item.time}</Text>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
+          }
+        />
+      )}
     </View>
   );
 }
@@ -67,64 +129,37 @@ export default function NotificationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: "#F8FAFC",
     paddingHorizontal: 16,
-    paddingTop: 50,
+    paddingTop: 10,
   },
-  header: {
+  card: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.cardBg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-  },
-  notifyCard: {
-    flexDirection: "row",
-    gap: 12,
-    backgroundColor: COLORS.cardBg,
-    padding: 14,
+    backgroundColor: "#FFFFFF",
+    padding: 16,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: 12,
-  },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.secondaryLight,
+    marginBottom: 10,
     alignItems: "center",
-    justifyContent: "center",
+    elevation: 1,
   },
-  notifyTitle: {
-    fontSize: 13,
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+  unreadCard: {
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
   },
-  notifyDesc: {
-    fontSize: 11,
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-    marginTop: 2,
+  iconContainer: { marginRight: 12 },
+  textContainer: { flex: 1 },
+  title: { fontSize: 15, color: "#334155", fontWeight: "500" },
+  unreadTitle: { fontWeight: "bold", color: "#0A3D91" },
+  message: { fontSize: 13, color: "#64748B", marginTop: 2 },
+  time: { fontSize: 11, color: "#94A3B8", marginTop: 4 },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#0A3D91",
+    marginLeft: 8,
   },
-  notifyTime: {
-    fontSize: 9,
-    fontFamily: FONTS.medium,
-    color: COLORS.placeholder,
-    marginTop: 6,
-  },
+  emptyContainer: { marginTop: 100, alignItems: "center" },
+  emptyText: { color: "#94A3B8", fontSize: 16 },
 });
