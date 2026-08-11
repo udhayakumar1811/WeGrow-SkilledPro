@@ -5,12 +5,12 @@
     "version": "1.0.5",
     "scheme": "wegrow",
     "orientation": "portrait",
-
     "icon": "./assets/logo/logo_square.png",
-
     "userInterfaceStyle": "light",
 
     "splash": {
+      "image": "./assets/logo/logo_square.png",
+      "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
 
@@ -29,6 +29,14 @@
 
     "plugins": [
       "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/logo/logo_square.png",
+          "backgroundColor": "#ffffff",
+          "imageWidth": 200
+        }
+      ],
       [
         "expo-build-properties",
         {

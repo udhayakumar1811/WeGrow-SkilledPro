@@ -1,17 +1,35 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
+import React from "react";
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  BackHandler,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import BottomNavbar from "../components/common/BottomNavbar";
 import { COLORS } from "../constants/colors";
 import { FONTS } from "../constants/fonts";
 
 export default function CommunityMembersRoute() {
   const router = useRouter();
+
+  // Hardware Back Button Handler
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        router.back();
+        return true;
+      };
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress,
+      );
+      return () => subscription.remove();
+    }, []),
+  );
 
   const members = [
     {
@@ -57,7 +75,11 @@ export default function CommunityMembersRoute() {
             </View>
           </View>
         ))}
+        <View style={{ height: 120 }} />
       </ScrollView>
+
+      {/* Bottom Navigation Bar */}
+      <BottomNavbar />
     </View>
   );
 }

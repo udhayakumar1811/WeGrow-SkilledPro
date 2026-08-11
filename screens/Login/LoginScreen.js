@@ -131,6 +131,14 @@ export default function LoginScreen() {
             />
           </TouchableOpacity>
         </View>
+
+        {/* Added Forgot Password Link */}
+        <TouchableOpacity
+          style={styles.forgotBtn}
+          onPress={() => router.push("/forgot-password")}
+        >
+          <Text style={styles.forgotText}>Forgot Password?</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Submit Button */}
@@ -174,7 +182,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "center", // FIXED: Changed from justify.content to justifyContent
     marginBottom: 20,
   },
   title: {
@@ -227,6 +235,15 @@ const styles = StyleSheet.create({
   },
   eyeBtn: {
     padding: 6,
+  },
+  forgotBtn: {
+    alignSelf: "flex-end",
+    marginTop: 8,
+  },
+  forgotText: {
+    color: COLORS.primary,
+    fontSize: 13,
+    fontFamily: FONTS.medium,
   },
   submitBtn: {
     backgroundColor: COLORS.primary,

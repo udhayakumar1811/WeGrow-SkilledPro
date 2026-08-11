@@ -2,19 +2,24 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import BottomNavbar from "../components/common/BottomNavbar";
+import BottomNavbar from "../components/common/BottomNavbar"; // Path Corrected Here
 import { COLORS } from "../constants/colors";
 import { FONTS } from "../constants/fonts";
 import { cancelBookingAPI, getMyBookingsAPI } from "../services/booking";
+
+const STATUSBAR_HEIGHT =
+  Platform.OS === "android" ? StatusBar.currentHeight || 28 : 44;
 
 export default function MyBookingsScreen() {
   const router = useRouter();
@@ -76,7 +81,17 @@ export default function MyBookingsScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+    <View style={styles.mainWrapper}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      {/* Safe Area Status Bar Spacer */}
+      <View
+        style={{ height: STATUSBAR_HEIGHT, backgroundColor: COLORS.background }}
+      />
+
       <ScrollView
         style={styles.container}
         showsVerticalScrollIndicator={false}
@@ -88,6 +103,7 @@ export default function MyBookingsScreen() {
           />
         }
       >
+        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backBtn}
@@ -178,17 +194,21 @@ export default function MyBookingsScreen() {
 }
 
 const styles = StyleSheet.create({
+  mainWrapper: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
     paddingHorizontal: 16,
-    paddingTop: 50,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 20,
+    paddingTop: 8,
   },
   backBtn: {
     width: 36,

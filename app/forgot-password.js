@@ -11,7 +11,8 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import COLORS from "../constants/colors";
+// மாற்றப்பட்ட import வரி:
+import { COLORS } from "../constants/colors";
 import { forgotPasswordAPI } from "../services/auth";
 
 export default function ForgotPassword() {
@@ -49,7 +50,7 @@ export default function ForgotPassword() {
         <Ionicons
           name="arrow-back"
           size={24}
-          color={COLORS.primary || "#0A3D91"}
+          color={COLORS.primary} // இப்போது சரியாக வேலை செய்யும்
         />
       </TouchableOpacity>
 

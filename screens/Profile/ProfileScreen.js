@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -14,15 +14,21 @@ import BottomNavbar from "../../components/common/BottomNavbar";
 import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
 import { getUserProfileAPI, logoutAPI } from "../../services/auth";
+import { getNotificationsAPI } from "../../services/notification";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+  // Screen focus ஆகும்போதெல்லாம் Profile & Notifications Unread Count எடுக்கும்
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+      fetchUnreadNotificationCount();
+    }, []),
+  );
 
   const fetchProfile = async () => {
     try {
@@ -33,6 +39,24 @@ export default function ProfileScreen() {
       console.log("Error loading profile:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Unread Notifications Count எடுக்கும் செயல்பாடு
+  const fetchUnreadNotificationCount = async () => {
+    try {
+      const res = await getNotificationsAPI(1, 50);
+      const list =
+        res?.data?.notifications ||
+        res?.notifications ||
+        res?.data ||
+        (Array.isArray(res) ? res : []);
+
+      // Read ஆகாத அறிவிப்புகளை மட்டும் கணக்கிடுதல்
+      const unreadList = list.filter((item) => !item.isRead && !item.read);
+      setUnreadCount(unreadList.length);
+    } catch (error) {
+      console.log("Error fetching notification count:", error);
     }
   };
 
@@ -58,8 +82,28 @@ export default function ProfileScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* Header with Notification Icon & Badge */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>My Profile</Text>
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => router.push("/notification")}
+          >
+            <Ionicons
+              name="notifications-outline"
+              size={22}
+              color={COLORS.primary}
+            />
+
+            {/* Notification Badge with Count */}
+            {unreadCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
         {loading ? (
@@ -107,7 +151,7 @@ export default function ProfileScreen() {
               />
             </TouchableOpacity>
 
-            {/* NEW: Rewards & Referrals */}
+            {/* Rewards & Referrals */}
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => router.push("/rewards")}
@@ -127,7 +171,7 @@ export default function ProfileScreen() {
               />
             </TouchableOpacity>
 
-            {/* NEW: Community Members */}
+            {/* Community Members */}
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => router.push("/members")}
@@ -139,7 +183,6 @@ export default function ProfileScreen() {
                   color={COLORS.primary}
                 />
               </View>
-
               <Text style={styles.menuText}>WeGrow Community Members</Text>
               <Ionicons
                 name="chevron-forward"
@@ -148,6 +191,7 @@ export default function ProfileScreen() {
               />
             </TouchableOpacity>
 
+            {/* Account Information */}
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => router.push("/account-info")}
@@ -167,6 +211,7 @@ export default function ProfileScreen() {
               />
             </TouchableOpacity>
 
+            {/* Help & Support */}
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => router.push("/help-support")}
@@ -228,11 +273,43 @@ const styles = StyleSheet.create({
     paddingTop: 50,
   },
   header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 20,
   },
   headerTitle: {
     color: COLORS.textPrimary,
     fontSize: 22,
+    fontFamily: FONTS.bold,
+  },
+  iconBtn: {
+    position: "relative",
+    backgroundColor: COLORS.cardBg,
+    padding: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  badge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: "#EF4444",
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: COLORS.cardBg,
+  },
+  badgeText: {
+    color: "#FFFFFF",
+    fontSize: 9,
     fontFamily: FONTS.bold,
   },
   profileCard: {

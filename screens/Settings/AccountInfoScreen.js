@@ -2,16 +2,17 @@ import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    BackHandler,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  BackHandler,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import BottomNavbar from "../../components/common/BottomNavbar";
 import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
 import { getUserProfileAPI } from "../../services/auth";
@@ -372,10 +373,13 @@ export default function AccountInfoScreen() {
               </TouchableOpacity>
             )}
 
-            <View style={{ height: 40 }} />
+            <View style={{ height: 120 }} />
           </>
         )}
       </ScrollView>
+
+      {/* Bottom Navigation Bar */}
+      <BottomNavbar />
     </View>
   );
 }

@@ -7,17 +7,20 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
 import { getEventByIdAPI } from "../../services/workshop";
 
 export default function WorkshopDetailsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
   const { id } = params;
 
@@ -33,7 +36,7 @@ export default function WorkshopDetailsScreen() {
   const fetchEventDetails = async () => {
     try {
       const res = await getEventByIdAPI(id);
-      const data = res?.data || res?.event || res;
+      const data = res?.data?.event || res?.data || res?.event || res;
       setEventData(data);
     } catch (error) {
       console.log("Error loading event details:", error);
@@ -66,15 +69,20 @@ export default function WorkshopDetailsScreen() {
     }
 
     router.push(
-      `/payment?id=${eventData._id || eventData.id}&amount=${eventData.price || 499}&title=${encodeURIComponent(
-        eventData.title,
-      )}`,
+      `/payment?id=${eventData._id || eventData.id}&amount=${
+        eventData.price || 499
+      }&title=${encodeURIComponent(eventData.title)}`,
     );
   };
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor="transparent"
+          translucent={true}
+        />
         <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     );
@@ -83,6 +91,11 @@ export default function WorkshopDetailsScreen() {
   if (!eventData) {
     return (
       <View style={styles.loadingContainer}>
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor="transparent"
+          translucent={true}
+        />
         <Text style={styles.errorText}>Workshop details not found.</Text>
         <TouchableOpacity
           style={styles.backBtnFallback}
@@ -96,6 +109,11 @@ export default function WorkshopDetailsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Banner Image */}
         <View style={styles.imageWrapper}>
@@ -109,8 +127,12 @@ export default function WorkshopDetailsScreen() {
             style={styles.bannerImg}
             contentFit="cover"
           />
+          {/* Dynamic Top Position Using Insets */}
           <TouchableOpacity
-            style={styles.floatingBackBtn}
+            style={[
+              styles.floatingBackBtn,
+              { top: Math.max(insets.top, 30) + 12 },
+            ]}
             onPress={handleBackPress}
           >
             <Ionicons name="arrow-back" size={20} color={COLORS.primary} />
@@ -237,7 +259,7 @@ const styles = StyleSheet.create({
   imageWrapper: {
     position: "relative",
     width: "100%",
-    height: 240,
+    height: 270,
   },
   bannerImg: {
     width: "100%",
@@ -245,14 +267,15 @@ const styles = StyleSheet.create({
   },
   floatingBackBtn: {
     position: "absolute",
-    top: 45,
     left: 16,
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 10,
+    elevation: 4,
   },
   typeBadge: {
     position: "absolute",

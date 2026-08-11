@@ -6,8 +6,10 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   RefreshControl,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -19,12 +21,15 @@ import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
 import { getAllEventsAPI } from "../../services/workshop";
 
+const STATUSBAR_HEIGHT =
+  Platform.OS === "android" ? StatusBar.currentHeight || 28 : 44;
+
 export default function WorkshopScreen() {
   const router = useRouter();
   const [workshops, setWorkshops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState("ALL"); // ALL, STUDENT, BUSINESS
+  const [selectedFilter, setSelectedFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
   const [userRole, setUserRole] = useState(null);
@@ -35,7 +40,6 @@ export default function WorkshopScreen() {
     fetchWorkshops();
   }, []);
 
-  // 1. Check Login Status and User Role
   const checkUserAuthAndRole = async () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
@@ -45,7 +49,6 @@ export default function WorkshopScreen() {
         setIsLoggedIn(true);
         setUserRole(role);
 
-        // Auto-filter based on Role if Logged In
         if (role === "STUDENT") {
           setSelectedFilter("STUDENT");
         } else if (role === "BUSINESS") {
@@ -61,17 +64,14 @@ export default function WorkshopScreen() {
     }
   };
 
-  // 2. Fetch Events from AWS Server API
   const fetchWorkshops = async () => {
     try {
       const res = await getAllEventsAPI(1, 20);
+      const eventsData =
+        res?.data?.events || res?.events || res?.data || res || [];
 
-      if (res?.success && Array.isArray(res?.data?.events)) {
-        setWorkshops(res.data.events);
-      } else if (Array.isArray(res?.events)) {
-        setWorkshops(res.events);
-      } else if (Array.isArray(res)) {
-        setWorkshops(res);
+      if (Array.isArray(eventsData)) {
+        setWorkshops(eventsData);
       } else {
         setWorkshops([]);
       }
@@ -98,7 +98,6 @@ export default function WorkshopScreen() {
     }
   };
 
-  // 3. Navigate to Workshop Details Screen instead of Direct Payment
   const handleOpenDetails = (item) => {
     const eventId = item._id || item.id;
     if (eventId) {
@@ -108,7 +107,6 @@ export default function WorkshopScreen() {
     }
   };
 
-  // 4. Role and Search Based Filtering Logic
   const filteredWorkshops = workshops.filter((item) => {
     let matchesFilter = true;
     if (userRole === "STUDENT") {
@@ -129,7 +127,17 @@ export default function WorkshopScreen() {
   });
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+    <View style={styles.mainWrapper}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      {/* Dynamic Status Bar Safe Area Spacer */}
+      <View
+        style={{ height: STATUSBAR_HEIGHT, backgroundColor: COLORS.background }}
+      />
+
       <ScrollView
         style={styles.container}
         showsVerticalScrollIndicator={false}
@@ -168,7 +176,7 @@ export default function WorkshopScreen() {
           />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search workshops in Madurai, AI, MERN..."
+            placeholder="Search workshops in Madurai, AI, Python..."
             placeholderTextColor={COLORS.placeholder}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -184,7 +192,7 @@ export default function WorkshopScreen() {
           )}
         </View>
 
-        {/* Category Filter Tabs (Show Tabs only for Guests / Admins) */}
+        {/* Category Filter Tabs */}
         {!userRole && (
           <View style={styles.filterRow}>
             {[
@@ -344,17 +352,21 @@ export default function WorkshopScreen() {
 }
 
 const styles = StyleSheet.create({
+  mainWrapper: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
     paddingHorizontal: 16,
-    paddingTop: 50,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 16,
+    paddingTop: 12,
   },
   backBtn: {
     width: 36,

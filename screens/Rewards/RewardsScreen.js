@@ -2,13 +2,14 @@ import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React from "react";
 import {
-    BackHandler,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  BackHandler,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import BottomNavbar from "../../components/common/BottomNavbar";
 import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
 
@@ -62,7 +63,11 @@ export default function RewardsScreen() {
             Applicable for both Student & Business Passes
           </Text>
         </View>
+        <View style={{ height: 120 }} />
       </ScrollView>
+
+      {/* Bottom Navigation Bar */}
+      <BottomNavbar />
     </View>
   );
 }

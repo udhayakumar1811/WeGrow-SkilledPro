@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
-import { Dimensions, StyleSheet } from "react-native";
+import { Dimensions, StyleSheet, View } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -15,24 +15,22 @@ const { width } = Dimensions.get("window");
 export default function IndexSplashScreen() {
   const router = useRouter();
 
-  // Animation values
+  // Animation Shared Values
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.85);
 
   useEffect(() => {
-    // Fade-in animation
+    // 1. Fade In & Logo Zoom Animation
     opacity.value = withTiming(1, {
       duration: 1000,
       easing: Easing.out(Easing.ease),
     });
-
-    // Zoom animation
     scale.value = withTiming(1, {
       duration: 1200,
       easing: Easing.out(Easing.back(1.2)),
     });
 
-    // Navigate to Home after 2.5 seconds
+    // 2. Automatically navigate to Home Screen after 2.5 seconds
     const timer = setTimeout(() => {
       router.replace("/home");
     }, 2500);
@@ -48,13 +46,17 @@ export default function IndexSplashScreen() {
   });
 
   return (
-    <Animated.View style={[styles.container, logoAnimatedStyle]}>
-      <Image
-        source={require("../../assets/logo/logo_square.png")}
-        style={styles.logo}
-        contentFit="contain"
-      />
-    </Animated.View>
+    <View style={styles.container}>
+      {/* Main Square Logo in Center */}
+      <Animated.View style={[styles.logoContainer, logoAnimatedStyle]}>
+        <Image
+          source={require("../../assets/logo/logo_square.png")}
+          style={styles.logo}
+          contentFit="contain"
+          transition={300}
+        />
+      </Animated.View>
+    </View>
   );
 }
 
@@ -65,7 +67,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
+  logoContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+    backgroundColor: COLORS.cardBg || "#FFFFFF",
+    borderRadius: 24,
+    shadowColor: COLORS.primary || "#0A3D91",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
+  },
   logo: {
     width: width * 0.65,
     height: width * 0.65,

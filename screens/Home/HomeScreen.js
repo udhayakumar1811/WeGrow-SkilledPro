@@ -6,13 +6,16 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   BackHandler,
   Dimensions,
   FlatList,
   ImageBackground,
   Modal,
+  Platform,
   RefreshControl,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -22,10 +25,14 @@ import {
 import BottomNavbar from "../../components/common/BottomNavbar";
 import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
+import { API } from "../../services/api";
 import { getUserProfileAPI } from "../../services/auth";
+import { getNotificationsAPI } from "../../services/notification";
 import { getAllEventsAPI } from "../../services/workshop";
 
 const { width } = Dimensions.get("window");
+const STATUSBAR_HEIGHT =
+  Platform.OS === "ios" ? 44 : StatusBar.currentHeight || 30;
 
 const BASE_BANNERS = [
   {
@@ -86,9 +93,12 @@ export default function HomeScreen() {
   const [workshops, setWorkshops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const [currentIndex, setCurrentIndex] = useState(BASE_BANNERS.length);
   const flatListRef = useRef(null);
+
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   const [modalVisible, setModalVisible] = useState(false);
   const [enquiryForm, setEnquiryForm] = useState({
@@ -102,45 +112,63 @@ export default function HomeScreen() {
   useEffect(() => {
     checkUserStatus();
     fetchEvents();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.03,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
   }, []);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUnreadNotificationCount();
+    }, []),
+  );
+
   useEffect(() => {
-    const timer = setTimeout(() => {
+    setTimeout(() => {
       flatListRef.current?.scrollToIndex({
         index: BASE_BANNERS.length,
         animated: false,
       });
     }, 100);
-    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentIndex((prevIndex) => {
-        const nextIndex = prevIndex + 1;
+      let nextIndex = currentIndex + 1;
 
-        flatListRef.current?.scrollToIndex({
-          index: nextIndex,
-          animated: true,
-        });
-
-        if (nextIndex >= BASE_BANNERS.length * 2) {
-          setTimeout(() => {
-            const resetIndex = BASE_BANNERS.length;
-            flatListRef.current?.scrollToIndex({
-              index: resetIndex,
-              animated: false,
-            });
-            setCurrentIndex(resetIndex);
-          }, 500);
-        }
-
-        return nextIndex;
+      flatListRef.current?.scrollToIndex({
+        index: nextIndex,
+        animated: true,
       });
+
+      setCurrentIndex(nextIndex);
+
+      if (nextIndex >= BASE_BANNERS.length * 2) {
+        setTimeout(() => {
+          let resetIndex = BASE_BANNERS.length;
+          flatListRef.current?.scrollToIndex({
+            index: resetIndex,
+            animated: false,
+          });
+          setCurrentIndex(resetIndex);
+        }, 500);
+      }
     }, 3500);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [currentIndex]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -181,6 +209,22 @@ export default function HomeScreen() {
     }
   };
 
+  const fetchUnreadNotificationCount = async () => {
+    try {
+      const res = await getNotificationsAPI(1, 50);
+      const list =
+        res?.data?.notifications ||
+        res?.notifications ||
+        res?.data ||
+        (Array.isArray(res) ? res : []);
+
+      const unreadList = list.filter((item) => !item.isRead && !item.read);
+      setUnreadCount(unreadList.length);
+    } catch (error) {
+      console.log("Error fetching notification count:", error);
+    }
+  };
+
   const fetchEvents = async () => {
     try {
       const res = await getAllEventsAPI(1, 20);
@@ -202,6 +246,7 @@ export default function HomeScreen() {
     setRefreshing(true);
     checkUserStatus();
     fetchEvents();
+    fetchUnreadNotificationCount();
   };
 
   const handleBannerAction = (banner) => {
@@ -214,7 +259,7 @@ export default function HomeScreen() {
     }
   };
 
-  const handleEnquirySubmit = () => {
+  const handleEnquirySubmit = async () => {
     if (!enquiryForm.name || !enquiryForm.phone) {
       Alert.alert(
         "Required Fields",
@@ -224,15 +269,32 @@ export default function HomeScreen() {
     }
 
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+    try {
+      const response = await API.post("/contact", {
+        fullName: enquiryForm.name,
+        email: enquiryForm.email,
+        mobileNumber: enquiryForm.phone,
+        queryAbout: ["COURSE"],
+        query: enquiryForm.message || "Demo session enquiry",
+      });
+
       setModalVisible(false);
       setEnquiryForm({ name: "", phone: "", email: "", message: "" });
       Alert.alert(
         "Enquiry Sent! 🎉",
-        "Thank you for reaching out. Our team will contact you shortly.",
+        response?.data?.message ||
+          "Thank you for reaching out. Our team will contact you shortly.",
       );
-    }, 1000);
+    } catch (error) {
+      console.log("Error submitting enquiry:", error);
+      Alert.alert(
+        "Submission Failed",
+        error?.response?.data?.message ||
+          "Failed to send your enquiry. Please try again.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const getWorkshopsToDisplay = () => {
@@ -248,10 +310,21 @@ export default function HomeScreen() {
   };
 
   const displayedWorkshops = getWorkshopsToDisplay();
+  const featuredWorkshop = workshops.length > 0 ? workshops[0] : null;
   const activeDotIndex = currentIndex % BASE_BANNERS.length;
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      {/* Explicit Top Spacer for Status Bar */}
+      <View
+        style={{ height: STATUSBAR_HEIGHT, backgroundColor: COLORS.background }}
+      />
+
       <ScrollView
         style={styles.container}
         showsVerticalScrollIndicator={false}
@@ -283,6 +356,13 @@ export default function HomeScreen() {
                 size={18}
                 color={COLORS.primary}
               />
+              {unreadCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
 
             {userProfile ? (
@@ -327,14 +407,6 @@ export default function HomeScreen() {
               offset: (width - 32) * index,
               index,
             })}
-            onScrollToIndexFailed={(info) => {
-              setTimeout(() => {
-                flatListRef.current?.scrollToIndex({
-                  index: info.index,
-                  animated: false,
-                });
-              }, 100);
-            }}
             onMomentumScrollEnd={(e) => {
               const idx = Math.round(
                 e.nativeEvent.contentOffset.x / (width - 32),
@@ -373,12 +445,14 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Horizontal Workshops */}
+        {/* Horizontal Workshops Header Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>
-            {userRole === "BUSINESS"
-              ? "BUSINESS Offline Workshops"
-              : "STUDENT Offline Workshops"}
+            {userRole === "STUDENT"
+              ? "STUDENT Offline Workshops"
+              : userRole === "BUSINESS"
+                ? "BUSINESS Offline Workshops"
+                : "Offline Workshops"}
           </Text>
           <TouchableOpacity onPress={() => router.push("/workshops")}>
             <Text style={styles.seeAllText}>See All</Text>
@@ -495,6 +569,115 @@ export default function HomeScreen() {
           </ScrollView>
         )}
 
+        {/* FEATURED UPCOMING SECTION */}
+        {featuredWorkshop && (
+          <View style={{ marginTop: 28 }}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>
+                🔥 Next Big Upcoming Workshop
+              </Text>
+            </View>
+
+            <Animated.View
+              style={[
+                styles.featuredCardWrapper,
+                { transform: [{ scale: pulseAnim }] },
+              ]}
+            >
+              <TouchableOpacity
+                activeOpacity={0.9}
+                style={styles.featuredCard}
+                onPress={() =>
+                  router.push(
+                    `/workshop-details?id=${
+                      featuredWorkshop._id || featuredWorkshop.id
+                    }`,
+                  )
+                }
+              >
+                <Image
+                  source={{
+                    uri:
+                      featuredWorkshop.image &&
+                      featuredWorkshop.image.startsWith("http")
+                        ? featuredWorkshop.image
+                        : "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800",
+                  }}
+                  style={styles.featuredImg}
+                  contentFit="cover"
+                />
+
+                <View style={styles.pulseLiveBadge}>
+                  <View style={styles.pulseDot} />
+                  <Text style={styles.pulseLiveText}>UPCOMING EXCLUSIVE</Text>
+                </View>
+
+                <View style={styles.featuredCardBody}>
+                  <Text style={styles.featuredTitle}>
+                    {featuredWorkshop.title}
+                  </Text>
+                  <Text style={styles.featuredDesc} numberOfLines={2}>
+                    {featuredWorkshop.description}
+                  </Text>
+
+                  <View style={styles.featuredMetaRow}>
+                    <View style={styles.infoMeta}>
+                      <Ionicons
+                        name="location-outline"
+                        size={13}
+                        color={COLORS.secondary}
+                      />
+                      <Text style={styles.featuredMetaText}>
+                        {featuredWorkshop.location || "Madurai"}
+                      </Text>
+                    </View>
+                    <View style={styles.infoMeta}>
+                      <Ionicons
+                        name="calendar-outline"
+                        size={13}
+                        color={COLORS.secondary}
+                      />
+                      <Text style={styles.featuredMetaText}>
+                        {featuredWorkshop.date
+                          ? new Date(featuredWorkshop.date).toLocaleDateString(
+                              "en-IN",
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )
+                          : "Coming Soon"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.featuredActionRow}>
+                    <Text style={styles.featuredPrice}>
+                      ₹{featuredWorkshop.price || "999"}
+                    </Text>
+
+                    <TouchableOpacity
+                      style={styles.featuredBookBtn}
+                      onPress={() =>
+                        router.push(
+                          `/workshop-details?id=${
+                            featuredWorkshop._id || featuredWorkshop.id
+                          }`,
+                        )
+                      }
+                    >
+                      <Text style={styles.featuredBookText}>
+                        Reserve Seat Now 🔥
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        )}
+
         {/* Popular Categories */}
         <Text
           style={[styles.sectionTitle, { marginTop: 24, marginBottom: 14 }]}
@@ -564,7 +747,7 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* Upcoming Workshops */}
+        {/* Upcoming Workshops List */}
         <View style={[styles.sectionHeader, { marginTop: 24 }]}>
           <Text style={styles.sectionTitle}>Upcoming Workshops</Text>
           <TouchableOpacity onPress={() => router.push("/workshops")}>
@@ -574,10 +757,7 @@ export default function HomeScreen() {
 
         <View style={styles.upcomingContainer}>
           {workshops.slice(0, 3).map((item, index) => (
-            <View
-              key={item._id || item.id || `upcoming-${index}`}
-              style={styles.upcomingRow}
-            >
+            <View key={item._id || item.id || index} style={styles.upcomingRow}>
               <View style={styles.upcomingLogoBox}>
                 <Ionicons name="code-slash" size={18} color={COLORS.primary} />
               </View>
@@ -603,7 +783,11 @@ export default function HomeScreen() {
               </View>
               <View style={{ alignItems: "flex-end", gap: 6 }}>
                 <View
-                  style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 4,
+                  }}
                 >
                   <Ionicons
                     name="calendar-outline"
@@ -651,7 +835,11 @@ export default function HomeScreen() {
               sub: "After Completion",
               icon: "ribbon-outline",
             },
-            { title: "Placement", sub: "Support", icon: "briefcase-outline" },
+            {
+              title: "Placement",
+              sub: "Support",
+              icon: "briefcase-outline",
+            },
           ].map((feature, i) => (
             <View key={i} style={styles.whyCard}>
               <Ionicons name={feature.icon} size={24} color={COLORS.primary} />
@@ -760,13 +948,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
     paddingHorizontal: 16,
-    paddingTop: 45,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 16,
+    paddingTop: 8,
   },
   logoHeaderWrapper: {
     flex: 1,
@@ -782,11 +970,33 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   iconBtn: {
+    position: "relative",
     backgroundColor: COLORS.cardBg,
     padding: 8,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: COLORS.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  badge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: "#EF4444",
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: COLORS.cardBg,
+  },
+  badgeText: {
+    color: "#FFFFFF",
+    fontSize: 9,
+    fontFamily: FONTS.bold,
   },
   headerLoginBtn: {
     flexDirection: "row",
@@ -1012,6 +1222,98 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: FONTS.bold,
   },
+  featuredCardWrapper: {
+    borderRadius: 18,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  featuredCard: {
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    overflow: "hidden",
+  },
+  featuredImg: {
+    width: "100%",
+    height: 160,
+  },
+  pulseLiveBadge: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    backgroundColor: COLORS.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  pulseDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#22C55E",
+  },
+  pulseLiveText: {
+    color: COLORS.textWhite,
+    fontSize: 10,
+    fontFamily: FONTS.bold,
+  },
+  featuredCardBody: {
+    padding: 16,
+  },
+  featuredTitle: {
+    fontSize: 16,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: 4,
+  },
+  featuredDesc: {
+    fontSize: 12,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginBottom: 12,
+    lineHeight: 18,
+  },
+  featuredMetaRow: {
+    flexDirection: "row",
+    gap: 16,
+    marginBottom: 14,
+  },
+  featuredMetaText: {
+    fontSize: 11,
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  featuredActionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: 12,
+  },
+  featuredPrice: {
+    fontSize: 18,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+  },
+  featuredBookBtn: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+  },
+  featuredBookText: {
+    color: COLORS.textWhite,
+    fontSize: 12,
+    fontFamily: FONTS.bold,
+  },
   categoryGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -1118,29 +1420,29 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
+    marginTop: 6,
     textAlign: "center",
-    marginTop: 8,
   },
   whySubText: {
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
     textAlign: "center",
-    marginTop: 2,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "center",
     alignItems: "center",
-    padding: 16,
+    paddingHorizontal: 20,
   },
   modalContent: {
     width: "100%",
     backgroundColor: COLORS.cardBg,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 20,
-    elevation: 5,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   modalHeader: {
     flexDirection: "row",
@@ -1149,46 +1451,47 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   modalTitle: {
-    fontSize: 16,
-    fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
+    fontSize: 18,
+    fontFamily: FONTS.bold,
   },
   modalSub: {
-    fontSize: 11,
-    fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
+    fontSize: 12,
+    fontFamily: FONTS.regular,
     marginBottom: 16,
+    lineHeight: 18,
   },
   inputGroup: {
     marginBottom: 12,
   },
   label: {
+    color: COLORS.textSecondary,
     fontSize: 11,
     fontFamily: FONTS.medium,
-    color: COLORS.textPrimary,
     marginBottom: 4,
   },
   input: {
     backgroundColor: COLORS.background,
-    borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 8,
+    borderWidth: 1,
+    borderRadius: 10,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 12,
-    fontFamily: FONTS.regular,
+    paddingVertical: 10,
     color: COLORS.textPrimary,
+    fontSize: 13,
+    fontFamily: FONTS.regular,
   },
   submitEnquiryBtn: {
     backgroundColor: COLORS.primary,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 10,
   },
   submitEnquiryText: {
     color: COLORS.textWhite,
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: FONTS.bold,
   },
 });
