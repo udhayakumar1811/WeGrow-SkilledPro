@@ -5,19 +5,26 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
+import { useTheme } from "../../constants/ThemeContext";
 import { loginAPI } from "../../services/auth";
+
+const STATUSBAR_HEIGHT =
+  Platform.OS === "android" ? StatusBar.currentHeight || 28 : 44;
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { isDarkMode, themeColors } = useTheme();
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -83,115 +90,171 @@ export default function LoginScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Safe Back Button */}
-      <TouchableOpacity style={styles.backBtn} onPress={handleBackPress}>
-        <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
-      </TouchableOpacity>
+    <View
+      style={[styles.mainWrapper, { backgroundColor: themeColors.background }]}
+    >
+      <StatusBar
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      {/* Safe Area Spacer for Status Bar */}
+      <View
+        style={{
+          height: STATUSBAR_HEIGHT,
+          backgroundColor: themeColors.background,
+        }}
+      />
 
-      <Text style={styles.title}>Welcome Back 👋</Text>
-      <Text style={styles.subtitle}>
-        Sign in to your WeGrow account to continue.
-      </Text>
+      <ScrollView
+        style={[styles.container, { backgroundColor: themeColors.background }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Safe Back Button */}
+        <TouchableOpacity
+          style={[
+            styles.backBtn,
+            {
+              backgroundColor: themeColors.cardBg,
+              borderColor: themeColors.border,
+            },
+          ]}
+          onPress={handleBackPress}
+        >
+          <Ionicons name="arrow-back" size={24} color={themeColors.primary} />
+        </TouchableOpacity>
 
-      {/* Email Input */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Email Address *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. raj@gmail.com"
-          placeholderTextColor={COLORS.placeholder}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={form.email}
-          onChangeText={(v) => handleChange("email", v)}
-        />
-      </View>
+        <Text style={[styles.title, { color: themeColors.textPrimary }]}>
+          Welcome Back 👋
+        </Text>
+        <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
+          Sign in to your WeGrow account to continue.
+        </Text>
 
-      {/* Password Input */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Password *</Text>
-        <View style={styles.passwordWrapper}>
+        {/* Email Input */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+            Email Address *
+          </Text>
           <TextInput
-            style={styles.passwordInput}
-            placeholder="Enter password"
-            placeholderTextColor={COLORS.placeholder}
-            secureTextEntry={!showPassword}
-            value={form.password}
-            onChangeText={(v) => handleChange("password", v)}
+            style={[
+              styles.input,
+              {
+                backgroundColor: themeColors.inputBg,
+                borderColor: themeColors.border,
+                color: themeColors.textPrimary,
+              },
+            ]}
+            placeholder="e.g. raj@gmail.com"
+            placeholderTextColor={themeColors.placeholder}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={form.email}
+            onChangeText={(v) => handleChange("email", v)}
           />
-          <TouchableOpacity
-            onPress={() => setShowPassword(!showPassword)}
-            style={styles.eyeBtn}
+        </View>
+
+        {/* Password Input */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+            Password *
+          </Text>
+          <View
+            style={[
+              styles.passwordWrapper,
+              {
+                backgroundColor: themeColors.inputBg,
+                borderColor: themeColors.border,
+              },
+            ]}
           >
-            <Ionicons
-              name={showPassword ? "eye-off-outline" : "eye-outline"}
-              size={20}
-              color={COLORS.placeholder}
+            <TextInput
+              style={[styles.passwordInput, { color: themeColors.textPrimary }]}
+              placeholder="Enter password"
+              placeholderTextColor={themeColors.placeholder}
+              secureTextEntry={!showPassword}
+              value={form.password}
+              onChangeText={(v) => handleChange("password", v)}
             />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.eyeBtn}
+            >
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color={themeColors.placeholder}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Forgot Password Link */}
+          <TouchableOpacity
+            style={styles.forgotBtn}
+            onPress={() => router.push("/forgot-password")}
+          >
+            <Text style={[styles.forgotText, { color: themeColors.primary }]}>
+              Forgot Password?
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Added Forgot Password Link */}
+        {/* Submit Button */}
         <TouchableOpacity
-          style={styles.forgotBtn}
-          onPress={() => router.push("/forgot-password")}
+          style={[styles.submitBtn, { backgroundColor: themeColors.primary }]}
+          onPress={handleLogin}
+          disabled={loading}
         >
-          <Text style={styles.forgotText}>Forgot Password?</Text>
+          {loading ? (
+            <ActivityIndicator color={themeColors.textWhite} />
+          ) : (
+            <Text style={styles.submitBtnText}>Sign In</Text>
+          )}
         </TouchableOpacity>
-      </View>
 
-      {/* Submit Button */}
-      <TouchableOpacity
-        style={styles.submitBtn}
-        onPress={handleLogin}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color={COLORS.textWhite} />
-        ) : (
-          <Text style={styles.submitBtnText}>Sign In</Text>
-        )}
-      </TouchableOpacity>
+        {/* Register Links */}
+        <View style={styles.registerRow}>
+          <Text
+            style={[styles.registerText, { color: themeColors.textSecondary }]}
+          >
+            Don't have an account?{" "}
+          </Text>
+          <TouchableOpacity onPress={() => router.push("/signup-choice")}>
+            <Text style={[styles.registerLink, { color: themeColors.primary }]}>
+              Register
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* Register Links */}
-      <View style={styles.registerRow}>
-        <Text style={styles.registerText}>Don't have an account? </Text>
-        <TouchableOpacity onPress={() => router.push("/signup-choice")}>
-          <Text style={styles.registerLink}>Register</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={{ height: 60 }} />
-    </ScrollView>
+        <View style={{ height: 60 }} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  mainWrapper: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
     paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingTop: 10,
   },
   backBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.cardBg,
     borderWidth: 1,
-    borderColor: COLORS.border,
     alignItems: "center",
-    justifyContent: "center", // FIXED: Changed from justify.content to justifyContent
+    justifyContent: "center",
     marginBottom: 20,
   },
   title: {
-    color: COLORS.textPrimary,
     fontSize: 24,
     fontFamily: FONTS.bold,
   },
   subtitle: {
-    color: COLORS.textSecondary,
     fontSize: 13,
     fontFamily: FONTS.regular,
     marginTop: 4,
@@ -201,27 +264,21 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   label: {
-    color: COLORS.textSecondary,
     fontSize: 12,
     fontFamily: FONTS.medium,
     marginBottom: 6,
   },
   input: {
-    backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    color: COLORS.textPrimary,
     fontSize: 14,
     fontFamily: FONTS.regular,
   },
   passwordWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 14,
@@ -229,7 +286,6 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     paddingVertical: 12,
-    color: COLORS.textPrimary,
     fontSize: 14,
     fontFamily: FONTS.regular,
   },
@@ -241,19 +297,17 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   forgotText: {
-    color: COLORS.primary,
     fontSize: 13,
     fontFamily: FONTS.medium,
   },
   submitBtn: {
-    backgroundColor: COLORS.primary,
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: "center",
     marginTop: 10,
   },
   submitBtnText: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontSize: 15,
     fontFamily: FONTS.bold,
   },
@@ -264,12 +318,10 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   registerText: {
-    color: COLORS.textSecondary,
     fontSize: 13,
     fontFamily: FONTS.regular,
   },
   registerLink: {
-    color: COLORS.primary,
     fontSize: 13,
     fontFamily: FONTS.bold,
   },

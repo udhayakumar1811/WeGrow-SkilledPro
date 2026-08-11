@@ -2,7 +2,7 @@ import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -23,8 +23,8 @@ import {
   View,
 } from "react-native";
 import BottomNavbar from "../../components/common/BottomNavbar";
-import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
+import { useTheme } from "../../constants/ThemeContext";
 import { API } from "../../services/api";
 import { getUserProfileAPI } from "../../services/auth";
 import { getNotificationsAPI } from "../../services/notification";
@@ -87,6 +87,8 @@ const INFINITE_BANNERS = [...BASE_BANNERS, ...BASE_BANNERS, ...BASE_BANNERS];
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { isDarkMode, themeColors } = useTheme();
+
   const [selectedTab, setSelectedTab] = useState("All");
   const [userRole, setUserRole] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
@@ -130,7 +132,7 @@ export default function HomeScreen() {
   }, []);
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       fetchUnreadNotificationCount();
     }, []),
   );
@@ -171,7 +173,7 @@ export default function HomeScreen() {
   }, [currentIndex]);
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       const onBackPress = () => {
         Alert.alert(
           "Exit App",
@@ -314,25 +316,28 @@ export default function HomeScreen() {
   const activeDotIndex = currentIndex % BASE_BANNERS.length;
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: themeColors.background }}>
       <StatusBar
-        barStyle="dark-content"
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
         backgroundColor="transparent"
         translucent={true}
       />
       {/* Explicit Top Spacer for Status Bar */}
       <View
-        style={{ height: STATUSBAR_HEIGHT, backgroundColor: COLORS.background }}
+        style={{
+          height: STATUSBAR_HEIGHT,
+          backgroundColor: themeColors.background,
+        }}
       />
 
       <ScrollView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: themeColors.background }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[COLORS.primary]}
+            colors={[themeColors.primary]}
           />
         }
       >
@@ -348,16 +353,24 @@ export default function HomeScreen() {
 
           <View style={styles.headerRightSection}>
             <TouchableOpacity
-              style={styles.iconBtn}
+              style={[
+                styles.iconBtn,
+                {
+                  backgroundColor: themeColors.cardBg,
+                  borderColor: themeColors.border,
+                },
+              ]}
               onPress={() => router.push("/notification")}
             >
               <Ionicons
                 name="notifications-outline"
                 size={18}
-                color={COLORS.primary}
+                color={themeColors.primary}
               />
               {unreadCount > 0 && (
-                <View style={styles.badge}>
+                <View
+                  style={[styles.badge, { borderColor: themeColors.cardBg }]}
+                >
                   <Text style={styles.badgeText}>
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </Text>
@@ -367,25 +380,48 @@ export default function HomeScreen() {
 
             {userProfile ? (
               <TouchableOpacity
-                style={styles.userProfileBtn}
+                style={[
+                  styles.userProfileBtn,
+                  {
+                    backgroundColor: themeColors.cardBg,
+                    borderColor: themeColors.border,
+                  },
+                ]}
                 onPress={() => router.push("/profile")}
               >
-                <Text style={styles.headerUserName}>
+                <Text
+                  style={[
+                    styles.headerUserName,
+                    { color: themeColors.textPrimary },
+                  ]}
+                >
                   Hi, {userProfile.firstName} 👋
                 </Text>
-                <View style={styles.avatarCircle}>
-                  <Ionicons name="person" size={16} color={COLORS.primary} />
+                <View
+                  style={[
+                    styles.avatarCircle,
+                    { backgroundColor: themeColors.secondaryLight },
+                  ]}
+                >
+                  <Ionicons
+                    name="person"
+                    size={16}
+                    color={themeColors.primary}
+                  />
                 </View>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                style={styles.headerLoginBtn}
+                style={[
+                  styles.headerLoginBtn,
+                  { backgroundColor: themeColors.primary },
+                ]}
                 onPress={() => router.push("/login")}
               >
                 <Ionicons
                   name="log-in-outline"
                   size={16}
-                  color={COLORS.textWhite}
+                  color={themeColors.textWhite}
                 />
                 <Text style={styles.headerLoginText}>Login</Text>
               </TouchableOpacity>
@@ -425,7 +461,10 @@ export default function HomeScreen() {
                   <Text style={styles.carouselTitle}>{item.title}</Text>
                   <Text style={styles.carouselSub}>{item.subtitle}</Text>
                   <TouchableOpacity
-                    style={styles.carouselBtn}
+                    style={[
+                      styles.carouselBtn,
+                      { backgroundColor: themeColors.secondary },
+                    ]}
                     onPress={() => handleBannerAction(item)}
                   >
                     <Text style={styles.carouselBtnText}>{item.btnText}</Text>
@@ -439,7 +478,14 @@ export default function HomeScreen() {
             {BASE_BANNERS.map((_, idx) => (
               <View
                 key={idx}
-                style={[styles.dot, activeDotIndex === idx && styles.activeDot]}
+                style={[
+                  styles.dot,
+                  { backgroundColor: themeColors.border },
+                  activeDotIndex === idx && [
+                    styles.activeDot,
+                    { backgroundColor: themeColors.primary },
+                  ],
+                ]}
               />
             ))}
           </View>
@@ -447,7 +493,9 @@ export default function HomeScreen() {
 
         {/* Horizontal Workshops Header Section */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>
+          <Text
+            style={[styles.sectionTitle, { color: themeColors.textPrimary }]}
+          >
             {userRole === "STUDENT"
               ? "STUDENT Offline Workshops"
               : userRole === "BUSINESS"
@@ -455,24 +503,36 @@ export default function HomeScreen() {
                 : "Offline Workshops"}
           </Text>
           <TouchableOpacity onPress={() => router.push("/workshops")}>
-            <Text style={styles.seeAllText}>See All</Text>
+            <Text style={[styles.seeAllText, { color: themeColors.primary }]}>
+              See All
+            </Text>
           </TouchableOpacity>
         </View>
 
         {loading ? (
           <ActivityIndicator
             size="small"
-            color={COLORS.primary}
+            color={themeColors.primary}
             style={{ marginVertical: 20 }}
           />
         ) : displayedWorkshops.length === 0 ? (
-          <View style={styles.noDataBox}>
+          <View
+            style={[
+              styles.noDataBox,
+              {
+                backgroundColor: themeColors.cardBg,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
             <Ionicons
               name="calendar-outline"
               size={40}
-              color={COLORS.placeholder}
+              color={themeColors.placeholder}
             />
-            <Text style={styles.noDataText}>
+            <Text
+              style={[styles.noDataText, { color: themeColors.textSecondary }]}
+            >
               No workshops found for this category.
             </Text>
           </View>
@@ -485,7 +545,13 @@ export default function HomeScreen() {
             {displayedWorkshops.map((item) => (
               <TouchableOpacity
                 key={item._id || item.id}
-                style={styles.horizCard}
+                style={[
+                  styles.horizCard,
+                  {
+                    backgroundColor: themeColors.cardBg,
+                    borderColor: themeColors.border,
+                  },
+                ]}
                 activeOpacity={0.9}
                 onPress={() =>
                   router.push(`/workshop-details?id=${item._id || item.id}`)
@@ -502,16 +568,33 @@ export default function HomeScreen() {
                   contentFit="cover"
                 />
                 <View style={styles.horizBadgeTag}>
-                  <Text style={styles.horizBadgeText}>
+                  <Text
+                    style={[
+                      styles.horizBadgeText,
+                      { color: themeColors.primary },
+                    ]}
+                  >
                     {item.type || "STUDENT"}
                   </Text>
                 </View>
 
                 <View style={styles.horizCardContent}>
-                  <Text style={styles.horizTitle} numberOfLines={1}>
+                  <Text
+                    style={[
+                      styles.horizTitle,
+                      { color: themeColors.textPrimary },
+                    ]}
+                    numberOfLines={1}
+                  >
                     {item.title}
                   </Text>
-                  <Text style={styles.horizDesc} numberOfLines={2}>
+                  <Text
+                    style={[
+                      styles.horizDesc,
+                      { color: themeColors.textSecondary },
+                    ]}
+                    numberOfLines={2}
+                  >
                     {item.description}
                   </Text>
 
@@ -520,9 +603,14 @@ export default function HomeScreen() {
                       <Ionicons
                         name="location-outline"
                         size={12}
-                        color={COLORS.secondary}
+                        color={themeColors.secondary}
                       />
-                      <Text style={styles.infoMetaText}>
+                      <Text
+                        style={[
+                          styles.infoMetaText,
+                          { color: themeColors.textSecondary },
+                        ]}
+                      >
                         {item.location || "Madurai"}
                       </Text>
                     </View>
@@ -530,9 +618,14 @@ export default function HomeScreen() {
                       <Ionicons
                         name="calendar-outline"
                         size={12}
-                        color={COLORS.secondary}
+                        color={themeColors.secondary}
                       />
-                      <Text style={styles.infoMetaText}>
+                      <Text
+                        style={[
+                          styles.infoMetaText,
+                          { color: themeColors.textSecondary },
+                        ]}
+                      >
                         {item.date
                           ? new Date(item.date).toLocaleDateString("en-IN", {
                               day: "numeric",
@@ -543,15 +636,35 @@ export default function HomeScreen() {
                     </View>
                   </View>
 
-                  <View style={styles.horizPriceRow}>
+                  <View
+                    style={[
+                      styles.horizPriceRow,
+                      { borderTopColor: themeColors.border },
+                    ]}
+                  >
                     <View>
-                      <Text style={styles.seatFeeText}>Seat Fee</Text>
-                      <Text style={styles.priceValText}>
+                      <Text
+                        style={[
+                          styles.seatFeeText,
+                          { color: themeColors.textSecondary },
+                        ]}
+                      >
+                        Seat Fee
+                      </Text>
+                      <Text
+                        style={[
+                          styles.priceValText,
+                          { color: themeColors.primary },
+                        ]}
+                      >
                         ₹{item.price || "999"}
                       </Text>
                     </View>
                     <TouchableOpacity
-                      style={styles.horizBookBtn}
+                      style={[
+                        styles.horizBookBtn,
+                        { backgroundColor: themeColors.primary },
+                      ]}
                       onPress={() =>
                         router.push(
                           `/workshop-details?id=${item._id || item.id}`,
@@ -573,7 +686,12 @@ export default function HomeScreen() {
         {featuredWorkshop && (
           <View style={{ marginTop: 28 }}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { color: themeColors.textPrimary },
+                ]}
+              >
                 🔥 Next Big Upcoming Workshop
               </Text>
             </View>
@@ -581,12 +699,21 @@ export default function HomeScreen() {
             <Animated.View
               style={[
                 styles.featuredCardWrapper,
-                { transform: [{ scale: pulseAnim }] },
+                {
+                  shadowColor: themeColors.primary,
+                  transform: [{ scale: pulseAnim }],
+                },
               ]}
             >
               <TouchableOpacity
                 activeOpacity={0.9}
-                style={styles.featuredCard}
+                style={[
+                  styles.featuredCard,
+                  {
+                    backgroundColor: themeColors.cardBg,
+                    borderColor: themeColors.primary,
+                  },
+                ]}
                 onPress={() =>
                   router.push(
                     `/workshop-details?id=${
@@ -607,16 +734,32 @@ export default function HomeScreen() {
                   contentFit="cover"
                 />
 
-                <View style={styles.pulseLiveBadge}>
+                <View
+                  style={[
+                    styles.pulseLiveBadge,
+                    { backgroundColor: themeColors.primary },
+                  ]}
+                >
                   <View style={styles.pulseDot} />
                   <Text style={styles.pulseLiveText}>UPCOMING EXCLUSIVE</Text>
                 </View>
 
                 <View style={styles.featuredCardBody}>
-                  <Text style={styles.featuredTitle}>
+                  <Text
+                    style={[
+                      styles.featuredTitle,
+                      { color: themeColors.textPrimary },
+                    ]}
+                  >
                     {featuredWorkshop.title}
                   </Text>
-                  <Text style={styles.featuredDesc} numberOfLines={2}>
+                  <Text
+                    style={[
+                      styles.featuredDesc,
+                      { color: themeColors.textSecondary },
+                    ]}
+                    numberOfLines={2}
+                  >
                     {featuredWorkshop.description}
                   </Text>
 
@@ -625,9 +768,14 @@ export default function HomeScreen() {
                       <Ionicons
                         name="location-outline"
                         size={13}
-                        color={COLORS.secondary}
+                        color={themeColors.secondary}
                       />
-                      <Text style={styles.featuredMetaText}>
+                      <Text
+                        style={[
+                          styles.featuredMetaText,
+                          { color: themeColors.textSecondary },
+                        ]}
+                      >
                         {featuredWorkshop.location || "Madurai"}
                       </Text>
                     </View>
@@ -635,9 +783,14 @@ export default function HomeScreen() {
                       <Ionicons
                         name="calendar-outline"
                         size={13}
-                        color={COLORS.secondary}
+                        color={themeColors.secondary}
                       />
-                      <Text style={styles.featuredMetaText}>
+                      <Text
+                        style={[
+                          styles.featuredMetaText,
+                          { color: themeColors.textSecondary },
+                        ]}
+                      >
                         {featuredWorkshop.date
                           ? new Date(featuredWorkshop.date).toLocaleDateString(
                               "en-IN",
@@ -652,13 +805,26 @@ export default function HomeScreen() {
                     </View>
                   </View>
 
-                  <View style={styles.featuredActionRow}>
-                    <Text style={styles.featuredPrice}>
+                  <View
+                    style={[
+                      styles.featuredActionRow,
+                      { borderTopColor: themeColors.border },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.featuredPrice,
+                        { color: themeColors.primary },
+                      ]}
+                    >
                       ₹{featuredWorkshop.price || "999"}
                     </Text>
 
                     <TouchableOpacity
-                      style={styles.featuredBookBtn}
+                      style={[
+                        styles.featuredBookBtn,
+                        { backgroundColor: themeColors.primary },
+                      ]}
                       onPress={() =>
                         router.push(
                           `/workshop-details?id=${
@@ -680,7 +846,14 @@ export default function HomeScreen() {
 
         {/* Popular Categories */}
         <Text
-          style={[styles.sectionTitle, { marginTop: 24, marginBottom: 14 }]}
+          style={[
+            styles.sectionTitle,
+            {
+              color: themeColors.textPrimary,
+              marginTop: 24,
+              marginBottom: 14,
+            },
+          ]}
         >
           Popular Categories
         </Text>
@@ -690,42 +863,48 @@ export default function HomeScreen() {
               title: "Full Stack",
               sub: "Development",
               icon: "laptop-code",
-              color: "#DBEAFE",
+              color: isDarkMode ? "#1E3A8A" : "#DBEAFE",
             },
             {
               title: "Python",
               sub: "Programming",
               icon: "python",
-              color: "#FEF3C7",
+              color: isDarkMode ? "#78350F" : "#FEF3C7",
             },
             {
               title: "UI/UX",
               sub: "Design",
               icon: "palette",
-              color: "#F3E8FF",
+              color: isDarkMode ? "#581C87" : "#F3E8FF",
             },
             {
               title: "AI & ML",
               sub: "Artificial Intelligence",
               icon: "brain",
-              color: "#DCFCE7",
+              color: isDarkMode ? "#064E3B" : "#DCFCE7",
             },
             {
               title: "Data Analytics",
               sub: "& Science",
               icon: "chart-bar",
-              color: "#FFEDD5",
+              color: isDarkMode ? "#7C2D12" : "#FFEDD5",
             },
             {
               title: "Cloud",
               sub: "Computing",
               icon: "cloud",
-              color: "#E0F2FE",
+              color: isDarkMode ? "#075985" : "#E0F2FE",
             },
           ].map((cat, idx) => (
             <TouchableOpacity
               key={idx}
-              style={styles.categoryCardThreeCol}
+              style={[
+                styles.categoryCardThreeCol,
+                {
+                  backgroundColor: themeColors.cardBg,
+                  borderColor: themeColors.border,
+                },
+              ]}
               onPress={() => router.push("/workshops")}
             >
               <View
@@ -734,13 +913,25 @@ export default function HomeScreen() {
                 <FontAwesome5
                   name={cat.icon}
                   size={16}
-                  color={COLORS.primary}
+                  color={themeColors.primary}
                 />
               </View>
-              <Text style={styles.catTitleText} numberOfLines={1}>
+              <Text
+                style={[
+                  styles.catTitleText,
+                  { color: themeColors.textPrimary },
+                ]}
+                numberOfLines={1}
+              >
                 {cat.title}
               </Text>
-              <Text style={styles.catSubText} numberOfLines={1}>
+              <Text
+                style={[
+                  styles.catSubText,
+                  { color: themeColors.textSecondary },
+                ]}
+                numberOfLines={1}
+              >
                 {cat.sub}
               </Text>
             </TouchableOpacity>
@@ -749,20 +940,56 @@ export default function HomeScreen() {
 
         {/* Upcoming Workshops List */}
         <View style={[styles.sectionHeader, { marginTop: 24 }]}>
-          <Text style={styles.sectionTitle}>Upcoming Workshops</Text>
+          <Text
+            style={[styles.sectionTitle, { color: themeColors.textPrimary }]}
+          >
+            Upcoming Workshops
+          </Text>
           <TouchableOpacity onPress={() => router.push("/workshops")}>
-            <Text style={styles.seeAllText}>See All</Text>
+            <Text style={[styles.seeAllText, { color: themeColors.primary }]}>
+              See All
+            </Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.upcomingContainer}>
+        <View
+          style={[
+            styles.upcomingContainer,
+            {
+              backgroundColor: themeColors.cardBg,
+              borderColor: themeColors.border,
+            },
+          ]}
+        >
           {workshops.slice(0, 3).map((item, index) => (
-            <View key={item._id || item.id || index} style={styles.upcomingRow}>
-              <View style={styles.upcomingLogoBox}>
-                <Ionicons name="code-slash" size={18} color={COLORS.primary} />
+            <View
+              key={item._id || item.id || index}
+              style={[
+                styles.upcomingRow,
+                { borderBottomColor: themeColors.border },
+              ]}
+            >
+              <View
+                style={[
+                  styles.upcomingLogoBox,
+                  { backgroundColor: themeColors.secondaryLight },
+                ]}
+              >
+                <Ionicons
+                  name="code-slash"
+                  size={18}
+                  color={themeColors.primary}
+                />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.upcomingTitleText}>{item.title}</Text>
+                <Text
+                  style={[
+                    styles.upcomingTitleText,
+                    { color: themeColors.textPrimary },
+                  ]}
+                >
+                  {item.title}
+                </Text>
                 <View
                   style={{
                     flexDirection: "row",
@@ -774,9 +1001,14 @@ export default function HomeScreen() {
                   <Ionicons
                     name="location-outline"
                     size={11}
-                    color={COLORS.textSecondary}
+                    color={themeColors.textSecondary}
                   />
-                  <Text style={styles.upcomingSubText}>
+                  <Text
+                    style={[
+                      styles.upcomingSubText,
+                      { color: themeColors.textSecondary },
+                    ]}
+                  >
                     {item.location || "Madurai"}
                   </Text>
                 </View>
@@ -792,9 +1024,14 @@ export default function HomeScreen() {
                   <Ionicons
                     name="calendar-outline"
                     size={11}
-                    color={COLORS.textSecondary}
+                    color={themeColors.textSecondary}
                   />
-                  <Text style={styles.upcomingDateText}>
+                  <Text
+                    style={[
+                      styles.upcomingDateText,
+                      { color: themeColors.textSecondary },
+                    ]}
+                  >
                     {item.date
                       ? new Date(item.date).toLocaleDateString("en-IN", {
                           day: "numeric",
@@ -804,12 +1041,22 @@ export default function HomeScreen() {
                   </Text>
                 </View>
                 <TouchableOpacity
-                  style={styles.registerOutlineBtn}
+                  style={[
+                    styles.registerOutlineBtn,
+                    { borderColor: themeColors.primary },
+                  ]}
                   onPress={() =>
                     router.push(`/workshop-details?id=${item._id || item.id}`)
                   }
                 >
-                  <Text style={styles.registerOutlineBtnText}>Register</Text>
+                  <Text
+                    style={[
+                      styles.registerOutlineBtnText,
+                      { color: themeColors.primary },
+                    ]}
+                  >
+                    Register
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -818,7 +1065,14 @@ export default function HomeScreen() {
 
         {/* Why Choose WeGrow */}
         <Text
-          style={[styles.sectionTitle, { marginTop: 24, marginBottom: 14 }]}
+          style={[
+            styles.sectionTitle,
+            {
+              color: themeColors.textPrimary,
+              marginTop: 24,
+              marginBottom: 14,
+            },
+          ]}
         >
           Why Choose WeGrow?
         </Text>
@@ -841,10 +1095,37 @@ export default function HomeScreen() {
               icon: "briefcase-outline",
             },
           ].map((feature, i) => (
-            <View key={i} style={styles.whyCard}>
-              <Ionicons name={feature.icon} size={24} color={COLORS.primary} />
-              <Text style={styles.whyTitleText}>{feature.title}</Text>
-              <Text style={styles.whySubText}>{feature.sub}</Text>
+            <View
+              key={i}
+              style={[
+                styles.whyCard,
+                {
+                  backgroundColor: themeColors.cardBg,
+                  borderColor: themeColors.border,
+                },
+              ]}
+            >
+              <Ionicons
+                name={feature.icon}
+                size={24}
+                color={themeColors.primary}
+              />
+              <Text
+                style={[
+                  styles.whyTitleText,
+                  { color: themeColors.textPrimary },
+                ]}
+              >
+                {feature.title}
+              </Text>
+              <Text
+                style={[
+                  styles.whySubText,
+                  { color: themeColors.textSecondary },
+                ]}
+              >
+                {feature.sub}
+              </Text>
             </View>
           ))}
         </View>
@@ -855,25 +1136,54 @@ export default function HomeScreen() {
       {/* Demo Enquiry Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View
+            style={[
+              styles.modalContent,
+              {
+                backgroundColor: themeColors.cardBg,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Book a Demo / Send Enquiry</Text>
+              <Text
+                style={[styles.modalTitle, { color: themeColors.textPrimary }]}
+              >
+                Book a Demo / Send Enquiry
+              </Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color={COLORS.textPrimary} />
+                <Ionicons
+                  name="close"
+                  size={24}
+                  color={themeColors.textPrimary}
+                />
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.modalSub}>
+            <Text
+              style={[styles.modalSub, { color: themeColors.textSecondary }]}
+            >
               Fill out this form and our expert team will contact you shortly
               for a free offline demo session!
             </Text>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name *</Text>
+              <Text
+                style={[styles.label, { color: themeColors.textSecondary }]}
+              >
+                Full Name *
+              </Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: themeColors.inputBg,
+                    borderColor: themeColors.border,
+                    color: themeColors.textPrimary,
+                  },
+                ]}
                 placeholder="Enter your name"
-                placeholderTextColor={COLORS.placeholder}
+                placeholderTextColor={themeColors.placeholder}
                 value={enquiryForm.name}
                 onChangeText={(v) =>
                   setEnquiryForm({ ...enquiryForm, name: v })
@@ -882,11 +1192,22 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Phone Number *</Text>
+              <Text
+                style={[styles.label, { color: themeColors.textSecondary }]}
+              >
+                Phone Number *
+              </Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: themeColors.inputBg,
+                    borderColor: themeColors.border,
+                    color: themeColors.textPrimary,
+                  },
+                ]}
                 placeholder="Enter your mobile number"
-                placeholderTextColor={COLORS.placeholder}
+                placeholderTextColor={themeColors.placeholder}
                 keyboardType="phone-pad"
                 value={enquiryForm.phone}
                 onChangeText={(v) =>
@@ -896,11 +1217,22 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address</Text>
+              <Text
+                style={[styles.label, { color: themeColors.textSecondary }]}
+              >
+                Email Address
+              </Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: themeColors.inputBg,
+                    borderColor: themeColors.border,
+                    color: themeColors.textPrimary,
+                  },
+                ]}
                 placeholder="you@example.com"
-                placeholderTextColor={COLORS.placeholder}
+                placeholderTextColor={themeColors.placeholder}
                 keyboardType="email-address"
                 value={enquiryForm.email}
                 onChangeText={(v) =>
@@ -910,11 +1242,24 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Your Message / Query</Text>
+              <Text
+                style={[styles.label, { color: themeColors.textSecondary }]}
+              >
+                Your Message / Query
+              </Text>
               <TextInput
-                style={[styles.input, { height: 75, textAlignVertical: "top" }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: themeColors.inputBg,
+                    borderColor: themeColors.border,
+                    color: themeColors.textPrimary,
+                    height: 75,
+                    textAlignVertical: "top",
+                  },
+                ]}
                 placeholder="Tell us about your goals or questions..."
-                placeholderTextColor={COLORS.placeholder}
+                placeholderTextColor={themeColors.placeholder}
                 multiline
                 value={enquiryForm.message}
                 onChangeText={(v) =>
@@ -924,12 +1269,15 @@ export default function HomeScreen() {
             </View>
 
             <TouchableOpacity
-              style={styles.submitEnquiryBtn}
+              style={[
+                styles.submitEnquiryBtn,
+                { backgroundColor: themeColors.primary },
+              ]}
               onPress={handleEnquirySubmit}
               disabled={submitting}
             >
               {submitting ? (
-                <ActivityIndicator color={COLORS.textWhite} />
+                <ActivityIndicator color={themeColors.textWhite} />
               ) : (
                 <Text style={styles.submitEnquiryText}>Submit Enquiry</Text>
               )}
@@ -946,7 +1294,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
     paddingHorizontal: 16,
   },
   header: {
@@ -971,11 +1318,9 @@ const styles = StyleSheet.create({
   },
   iconBtn: {
     position: "relative",
-    backgroundColor: COLORS.cardBg,
     padding: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: COLORS.border,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -991,7 +1336,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 4,
     borderWidth: 1.5,
-    borderColor: COLORS.cardBg,
   },
   badgeText: {
     color: "#FFFFFF",
@@ -1002,13 +1346,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: COLORS.primary,
     paddingVertical: 7,
     paddingHorizontal: 12,
     borderRadius: 20,
   },
   headerLoginText: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontSize: 12,
     fontFamily: FONTS.bold,
   },
@@ -1016,15 +1359,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: COLORS.cardBg,
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   headerUserName: {
-    color: COLORS.textPrimary,
     fontSize: 12,
     fontFamily: FONTS.bold,
   },
@@ -1032,7 +1372,6 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: COLORS.secondaryLight,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1056,25 +1395,24 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   carouselTag: {
-    color: COLORS.secondary,
+    color: "#FF7A00",
     fontSize: 10,
     fontFamily: FONTS.bold,
     letterSpacing: 1,
   },
   carouselTitle: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontSize: 18,
     fontFamily: FONTS.bold,
     marginTop: 4,
   },
   carouselSub: {
-    color: COLORS.border,
+    color: "#E2E8F0",
     fontSize: 12,
     fontFamily: FONTS.regular,
     marginTop: 4,
   },
   carouselBtn: {
-    backgroundColor: COLORS.secondary,
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 8,
@@ -1082,7 +1420,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   carouselBtnText: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontSize: 12,
     fontFamily: FONTS.bold,
   },
@@ -1097,11 +1435,9 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: COLORS.border,
   },
   activeDot: {
     width: 20,
-    backgroundColor: COLORS.primary,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -1110,25 +1446,20 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    color: COLORS.textPrimary,
     fontSize: 15,
     fontFamily: FONTS.bold,
   },
   seeAllText: {
-    color: COLORS.primary,
     fontSize: 12,
     fontFamily: FONTS.bold,
   },
   noDataBox: {
     padding: 30,
     alignItems: "center",
-    backgroundColor: COLORS.cardBg,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   noDataText: {
-    color: COLORS.textSecondary,
     fontSize: 12,
     fontFamily: FONTS.regular,
     marginTop: 8,
@@ -1139,10 +1470,8 @@ const styles = StyleSheet.create({
   },
   horizCard: {
     width: width * 0.7,
-    backgroundColor: COLORS.cardBg,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
     overflow: "hidden",
   },
   horizCardImg: {
@@ -1161,7 +1490,6 @@ const styles = StyleSheet.create({
   horizBadgeText: {
     fontSize: 9,
     fontFamily: FONTS.bold,
-    color: COLORS.primary,
   },
   horizCardContent: {
     padding: 12,
@@ -1169,13 +1497,11 @@ const styles = StyleSheet.create({
   horizTitle: {
     fontSize: 14,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
     marginBottom: 4,
   },
   horizDesc: {
     fontSize: 11,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
     marginBottom: 10,
   },
   horizInfoRow: {
@@ -1191,50 +1517,42 @@ const styles = StyleSheet.create({
   infoMetaText: {
     fontSize: 10,
     fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
   },
   horizPriceRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
     paddingTop: 8,
   },
   seatFeeText: {
     fontSize: 9,
-    color: COLORS.textSecondary,
     fontFamily: FONTS.medium,
   },
   priceValText: {
     fontSize: 14,
     fontFamily: FONTS.bold,
-    color: COLORS.primary,
   },
   horizBookBtn: {
-    backgroundColor: COLORS.primary,
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 6,
   },
   horizBookBtnText: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontSize: 10,
     fontFamily: FONTS.bold,
   },
   featuredCardWrapper: {
     borderRadius: 18,
-    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 4,
   },
   featuredCard: {
-    backgroundColor: COLORS.cardBg,
     borderRadius: 18,
     borderWidth: 2,
-    borderColor: COLORS.primary,
     overflow: "hidden",
   },
   featuredImg: {
@@ -1245,7 +1563,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 12,
     left: 12,
-    backgroundColor: COLORS.primary,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
@@ -1260,7 +1577,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#22C55E",
   },
   pulseLiveText: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontSize: 10,
     fontFamily: FONTS.bold,
   },
@@ -1270,13 +1587,11 @@ const styles = StyleSheet.create({
   featuredTitle: {
     fontSize: 16,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
     marginBottom: 4,
   },
   featuredDesc: {
     fontSize: 12,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
     marginBottom: 12,
     lineHeight: 18,
   },
@@ -1288,29 +1603,25 @@ const styles = StyleSheet.create({
   featuredMetaText: {
     fontSize: 11,
     fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
   },
   featuredActionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
     paddingTop: 12,
   },
   featuredPrice: {
     fontSize: 18,
     fontFamily: FONTS.bold,
-    color: COLORS.primary,
   },
   featuredBookBtn: {
-    backgroundColor: COLORS.primary,
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 10,
   },
   featuredBookText: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontSize: 12,
     fontFamily: FONTS.bold,
   },
@@ -1322,13 +1633,11 @@ const styles = StyleSheet.create({
   },
   categoryCardThreeCol: {
     width: (width - 48) / 3,
-    backgroundColor: COLORS.cardBg,
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 6,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: COLORS.border,
     marginBottom: 8,
   },
   catIconCircle: {
@@ -1342,21 +1651,17 @@ const styles = StyleSheet.create({
   catTitleText: {
     fontSize: 10,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
     textAlign: "center",
   },
   catSubText: {
     fontSize: 8,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
     textAlign: "center",
     marginTop: 1,
   },
   upcomingContainer: {
-    backgroundColor: COLORS.cardBg,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
     paddingHorizontal: 14,
   },
   upcomingRow: {
@@ -1364,41 +1669,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
     gap: 10,
   },
   upcomingLogoBox: {
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: COLORS.secondaryLight,
     alignItems: "center",
     justifyContent: "center",
   },
   upcomingTitleText: {
     fontSize: 12,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
   },
   upcomingSubText: {
     fontSize: 10,
-    color: COLORS.textSecondary,
     fontFamily: FONTS.regular,
   },
   upcomingDateText: {
     fontSize: 10,
-    color: COLORS.textSecondary,
     fontFamily: FONTS.medium,
   },
   registerOutlineBtn: {
     borderWidth: 1,
-    borderColor: COLORS.primary,
     paddingVertical: 3,
     paddingHorizontal: 10,
     borderRadius: 6,
   },
   registerOutlineBtnText: {
-    color: COLORS.primary,
     fontSize: 10,
     fontFamily: FONTS.bold,
   },
@@ -1409,24 +1707,20 @@ const styles = StyleSheet.create({
   },
   whyCard: {
     width: (width - 42) / 2,
-    backgroundColor: COLORS.cardBg,
     borderRadius: 12,
     padding: 14,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   whyTitleText: {
     fontSize: 11,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
     marginTop: 6,
     textAlign: "center",
   },
   whySubText: {
     fontSize: 10,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
     textAlign: "center",
   },
   modalOverlay: {
@@ -1438,11 +1732,9 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: "100%",
-    backgroundColor: COLORS.cardBg,
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   modalHeader: {
     flexDirection: "row",
@@ -1451,12 +1743,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   modalTitle: {
-    color: COLORS.textPrimary,
     fontSize: 18,
     fontFamily: FONTS.bold,
   },
   modalSub: {
-    color: COLORS.textSecondary,
     fontSize: 12,
     fontFamily: FONTS.regular,
     marginBottom: 16,
@@ -1466,31 +1756,26 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   label: {
-    color: COLORS.textSecondary,
     fontSize: 11,
     fontFamily: FONTS.medium,
     marginBottom: 4,
   },
   input: {
-    backgroundColor: COLORS.background,
-    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: COLORS.textPrimary,
     fontSize: 13,
     fontFamily: FONTS.regular,
   },
   submitEnquiryBtn: {
-    backgroundColor: COLORS.primary,
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: "center",
     marginTop: 10,
   },
   submitEnquiryText: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontSize: 14,
     fontFamily: FONTS.bold,
   },

@@ -1,21 +1,28 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { FONTS } from "../constants/fonts";
+import { useTheme } from "../constants/ThemeContext";
 import { resetPasswordAPI } from "../services/auth";
+
+const STATUSBAR_HEIGHT =
+  Platform.OS === "android" ? StatusBar.currentHeight || 28 : 44;
 
 export default function ResetPassword() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const token = params.token || "";
+  const { isDarkMode, themeColors } = useTheme();
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -61,72 +68,133 @@ export default function ResetPassword() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Reset Password</Text>
-        <Text style={styles.subtitle}>Enter your new password below.</Text>
+    <View
+      style={[styles.mainWrapper, { backgroundColor: themeColors.background }]}
+    >
+      <StatusBar
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      {/* Safe Area Spacer for Status Bar */}
+      <View
+        style={{
+          height: STATUSBAR_HEIGHT,
+          backgroundColor: themeColors.background,
+        }}
+      />
 
-        <Text style={styles.label}>New Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="New Password"
-          secureTextEntry
-          value={newPassword}
-          onChangeText={setNewPassword}
-        />
+      <View
+        style={[styles.container, { backgroundColor: themeColors.background }]}
+      >
+        <View style={styles.content}>
+          <Text style={[styles.title, { color: themeColors.textPrimary }]}>
+            Reset Password
+          </Text>
+          <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
+            Enter your new password below.
+          </Text>
 
-        <Text style={styles.label}>Confirm Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Confirm New Password"
-          secureTextEntry
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
+          <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+            New Password
+          </Text>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: themeColors.inputBg,
+                borderColor: themeColors.border,
+                color: themeColors.textPrimary,
+              },
+            ]}
+            placeholder="New Password"
+            placeholderTextColor={themeColors.placeholder}
+            secureTextEntry
+            value={newPassword}
+            onChangeText={setNewPassword}
+          />
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleResetPassword}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <Text style={styles.buttonText}>Reset Password</Text>
-          )}
-        </TouchableOpacity>
+          <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+            Confirm Password
+          </Text>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: themeColors.inputBg,
+                borderColor: themeColors.border,
+                color: themeColors.textPrimary,
+              },
+            ]}
+            placeholder="Confirm New Password"
+            placeholderTextColor={themeColors.placeholder}
+            secureTextEntry
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+          />
+
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: themeColors.primary }]}
+            onPress={handleResetPassword}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFF" />
+            ) : (
+              <Text style={styles.buttonText}>Reset Password</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8FAFC", paddingHorizontal: 20 },
-  content: { marginTop: 50 },
+  mainWrapper: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+  content: {
+    marginTop: 20,
+  },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
-    color: "#0A3D91",
+    fontFamily: FONTS.bold,
     marginBottom: 8,
   },
-  subtitle: { fontSize: 14, color: "#64748B", marginBottom: 24 },
-  label: { fontSize: 14, fontWeight: "600", color: "#334155", marginBottom: 8 },
+  subtitle: {
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    marginBottom: 24,
+  },
+  label: {
+    fontSize: 14,
+    fontFamily: FONTS.medium,
+    marginBottom: 8,
+  },
   input: {
-    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
+    fontFamily: FONTS.regular,
     marginBottom: 16,
   },
   button: {
-    backgroundColor: "#0A3D91",
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: "center",
     marginTop: 10,
   },
-  buttonText: { color: "#FFFFFF", fontWeight: "bold", fontSize: 16 },
+  buttonText: {
+    color: "#FFFFFF",
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+  },
 });

@@ -5,7 +5,9 @@ import {
   ActivityIndicator,
   Alert,
   BackHandler,
+  Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -13,12 +15,17 @@ import {
   View,
 } from "react-native";
 import BottomNavbar from "../../components/common/BottomNavbar";
-import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
+import { useTheme } from "../../constants/ThemeContext";
 import { getUserProfileAPI } from "../../services/auth";
+
+const STATUSBAR_HEIGHT =
+  Platform.OS === "android" ? StatusBar.currentHeight || 28 : 44;
 
 export default function AccountInfoScreen() {
   const router = useRouter();
+  const { isDarkMode, themeColors } = useTheme();
+
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -103,280 +110,609 @@ export default function AccountInfoScreen() {
   const isBusiness = profile?.role === "BUSINESS";
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color={COLORS.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Account Information</Text>
-        <TouchableOpacity
-          style={styles.editHeaderBtn}
-          onPress={() => setIsEditing(!isEditing)}
-        >
-          <Text style={styles.editHeaderBtnText}>
-            {isEditing ? "Cancel" : "Edit"}
+    <View
+      style={[styles.mainWrapper, { backgroundColor: themeColors.background }]}
+    >
+      <StatusBar
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      {/* Safe Area Spacer for Status Bar */}
+      <View
+        style={{
+          height: STATUSBAR_HEIGHT,
+          backgroundColor: themeColors.background,
+        }}
+      />
+
+      <View
+        style={[styles.container, { backgroundColor: themeColors.background }]}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={[
+              styles.backBtn,
+              {
+                backgroundColor: themeColors.cardBg,
+                borderColor: themeColors.border,
+              },
+            ]}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={22} color={themeColors.primary} />
+          </TouchableOpacity>
+          <Text
+            style={[styles.headerTitle, { color: themeColors.textPrimary }]}
+          >
+            Account Information
           </Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={[
+              styles.editHeaderBtn,
+              {
+                backgroundColor: themeColors.cardBg,
+                borderColor: themeColors.border,
+              },
+            ]}
+            onPress={() => setIsEditing(!isEditing)}
+          >
+            <Text
+              style={[styles.editHeaderBtnText, { color: themeColors.primary }]}
+            >
+              {isEditing ? "Cancel" : "Edit"}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {loading ? (
-          <ActivityIndicator
-            size="large"
-            color={COLORS.primary}
-            style={{ marginVertical: 40 }}
-          />
-        ) : (
-          <>
-            {/* Top Overview Avatar Card */}
-            <View style={styles.card}>
-              <View style={styles.avatarWrapper}>
-                <FontAwesome5
-                  name={isBusiness ? "briefcase" : "user-graduate"}
-                  size={30}
-                  color={COLORS.primary}
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {loading ? (
+            <ActivityIndicator
+              size="large"
+              color={themeColors.primary}
+              style={{ marginVertical: 40 }}
+            />
+          ) : (
+            <>
+              {/* Top Overview Avatar Card */}
+              <View
+                style={[
+                  styles.card,
+                  {
+                    backgroundColor: themeColors.cardBg,
+                    borderColor: themeColors.border,
+                    shadowColor: themeColors.textPrimary,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.avatarWrapper,
+                    { backgroundColor: themeColors.secondaryLight },
+                  ]}
+                >
+                  <FontAwesome5
+                    name={isBusiness ? "briefcase" : "user-graduate"}
+                    size={30}
+                    color={themeColors.primary}
+                  />
+                </View>
+                <Text
+                  style={[styles.userName, { color: themeColors.textPrimary }]}
+                >
+                  {form.firstName} {form.lastName}
+                </Text>
+                <View style={styles.badgeRow}>
+                  <Text
+                    style={[styles.roleTag, { color: themeColors.primary }]}
+                  >
+                    {profile?.role || "STUDENT"}
+                  </Text>
+                  <View style={styles.verifiedBadge}>
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={12}
+                      color="#22C55E"
+                    />
+                    <Text style={styles.verifiedText}>Verified</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Profile Details Form Box */}
+              <View
+                style={[
+                  styles.infoCard,
+                  {
+                    backgroundColor: themeColors.cardBg,
+                    borderColor: themeColors.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.sectionHeaderTitle,
+                    { color: themeColors.primary },
+                  ]}
+                >
+                  Personal & Contact Details
+                </Text>
+
+                {/* First & Last Name Fields */}
+                <View style={styles.rowFields}>
+                  <View
+                    style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}
+                  >
+                    <Text
+                      style={[
+                        styles.label,
+                        { color: themeColors.textSecondary },
+                      ]}
+                    >
+                      First Name
+                    </Text>
+                    {isEditing ? (
+                      <TextInput
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: themeColors.inputBg,
+                            borderColor: themeColors.border,
+                            color: themeColors.textPrimary,
+                          },
+                        ]}
+                        value={form.firstName}
+                        onChangeText={(v) => setForm({ ...form, firstName: v })}
+                      />
+                    ) : (
+                      <Text
+                        style={[styles.val, { color: themeColors.textPrimary }]}
+                      >
+                        {form.firstName}
+                      </Text>
+                    )}
+                  </View>
+
+                  <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
+                    <Text
+                      style={[
+                        styles.label,
+                        { color: themeColors.textSecondary },
+                      ]}
+                    >
+                      Last Name
+                    </Text>
+                    {isEditing ? (
+                      <TextInput
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: themeColors.inputBg,
+                            borderColor: themeColors.border,
+                            color: themeColors.textPrimary,
+                          },
+                        ]}
+                        value={form.lastName}
+                        onChangeText={(v) => setForm({ ...form, lastName: v })}
+                      />
+                    ) : (
+                      <Text
+                        style={[styles.val, { color: themeColors.textPrimary }]}
+                      >
+                        {form.lastName}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+
+                <View
+                  style={[
+                    styles.divider,
+                    { backgroundColor: themeColors.border },
+                  ]}
                 />
-              </View>
-              <Text style={styles.userName}>
-                {form.firstName} {form.lastName}
-              </Text>
-              <View style={styles.badgeRow}>
-                <Text style={styles.roleTag}>{profile?.role || "STUDENT"}</Text>
-                <View style={styles.verifiedBadge}>
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={12}
-                    color={COLORS.success}
-                  />
-                  <Text style={styles.verifiedText}>Verified</Text>
-                </View>
-              </View>
-            </View>
 
-            {/* Profile Details Form Box */}
-            <View style={styles.infoCard}>
-              <Text style={styles.sectionHeaderTitle}>
-                Personal & Contact Details
-              </Text>
-
-              {/* First & Last Name Fields */}
-              <View style={styles.rowFields}>
-                <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
-                  <Text style={styles.label}>First Name</Text>
+                {/* Email Address */}
+                <View style={styles.inputGroup}>
+                  <Text
+                    style={[styles.label, { color: themeColors.textSecondary }]}
+                  >
+                    Email Address
+                  </Text>
                   {isEditing ? (
                     <TextInput
-                      style={styles.input}
-                      value={form.firstName}
-                      onChangeText={(v) => setForm({ ...form, firstName: v })}
+                      style={[
+                        styles.input,
+                        {
+                          backgroundColor: themeColors.inputBg,
+                          borderColor: themeColors.border,
+                          color: themeColors.textPrimary,
+                        },
+                      ]}
+                      value={form.email}
+                      keyboardType="email-address"
+                      onChangeText={(v) => setForm({ ...form, email: v })}
                     />
                   ) : (
-                    <Text style={styles.val}>{form.firstName}</Text>
+                    <Text
+                      style={[styles.val, { color: themeColors.textPrimary }]}
+                    >
+                      {form.email}
+                    </Text>
                   )}
                 </View>
 
-                <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
-                  <Text style={styles.label}>Last Name</Text>
+                <View
+                  style={[
+                    styles.divider,
+                    { backgroundColor: themeColors.border },
+                  ]}
+                />
+
+                {/* Phone Number */}
+                <View style={styles.inputGroup}>
+                  <Text
+                    style={[styles.label, { color: themeColors.textSecondary }]}
+                  >
+                    Phone Number
+                  </Text>
                   {isEditing ? (
                     <TextInput
-                      style={styles.input}
-                      value={form.lastName}
-                      onChangeText={(v) => setForm({ ...form, lastName: v })}
+                      style={[
+                        styles.input,
+                        {
+                          backgroundColor: themeColors.inputBg,
+                          borderColor: themeColors.border,
+                          color: themeColors.textPrimary,
+                        },
+                      ]}
+                      value={form.phone}
+                      keyboardType="phone-pad"
+                      onChangeText={(v) => setForm({ ...form, phone: v })}
                     />
                   ) : (
-                    <Text style={styles.val}>{form.lastName}</Text>
+                    <Text
+                      style={[styles.val, { color: themeColors.textPrimary }]}
+                    >
+                      {form.phone}
+                    </Text>
                   )}
                 </View>
-              </View>
 
-              <View style={styles.divider} />
+                <View
+                  style={[
+                    styles.divider,
+                    { backgroundColor: themeColors.border },
+                  ]}
+                />
 
-              {/* Email Address */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Email Address</Text>
-                {isEditing ? (
-                  <TextInput
-                    style={styles.input}
-                    value={form.email}
-                    keyboardType="email-address"
-                    onChangeText={(v) => setForm({ ...form, email: v })}
-                  />
+                {/* Role Specific Details */}
+                {isBusiness ? (
+                  <>
+                    <View style={styles.inputGroup}>
+                      <Text
+                        style={[
+                          styles.label,
+                          { color: themeColors.textSecondary },
+                        ]}
+                      >
+                        Company / Business Name
+                      </Text>
+                      {isEditing ? (
+                        <TextInput
+                          style={[
+                            styles.input,
+                            {
+                              backgroundColor: themeColors.inputBg,
+                              borderColor: themeColors.border,
+                              color: themeColors.textPrimary,
+                            },
+                          ]}
+                          value={form.companyName}
+                          onChangeText={(v) =>
+                            setForm({ ...form, companyName: v })
+                          }
+                        />
+                      ) : (
+                        <Text
+                          style={[
+                            styles.val,
+                            { color: themeColors.textPrimary },
+                          ]}
+                        >
+                          {form.companyName || "Tech Solutions"}
+                        </Text>
+                      )}
+                    </View>
+
+                    <View
+                      style={[
+                        styles.divider,
+                        { backgroundColor: themeColors.border },
+                      ]}
+                    />
+
+                    <View style={styles.inputGroup}>
+                      <Text
+                        style={[
+                          styles.label,
+                          { color: themeColors.textSecondary },
+                        ]}
+                      >
+                        Designation & Industry
+                      </Text>
+                      {isEditing ? (
+                        <TextInput
+                          style={[
+                            styles.input,
+                            {
+                              backgroundColor: themeColors.inputBg,
+                              borderColor: themeColors.border,
+                              color: themeColors.textPrimary,
+                            },
+                          ]}
+                          value={form.businessType}
+                          onChangeText={(v) =>
+                            setForm({ ...form, businessType: v })
+                          }
+                        />
+                      ) : (
+                        <Text
+                          style={[
+                            styles.val,
+                            { color: themeColors.textPrimary },
+                          ]}
+                        >
+                          {form.designation || "Founder"} -{" "}
+                          {form.businessType || "Software"}
+                        </Text>
+                      )}
+                    </View>
+                  </>
                 ) : (
-                  <Text style={styles.val}>{form.email}</Text>
+                  <>
+                    <View style={styles.inputGroup}>
+                      <Text
+                        style={[
+                          styles.label,
+                          { color: themeColors.textSecondary },
+                        ]}
+                      >
+                        College / Institution
+                      </Text>
+                      {isEditing ? (
+                        <TextInput
+                          style={[
+                            styles.input,
+                            {
+                              backgroundColor: themeColors.inputBg,
+                              borderColor: themeColors.border,
+                              color: themeColors.textPrimary,
+                            },
+                          ]}
+                          value={form.college}
+                          onChangeText={(v) => setForm({ ...form, college: v })}
+                        />
+                      ) : (
+                        <Text
+                          style={[
+                            styles.val,
+                            { color: themeColors.textPrimary },
+                          ]}
+                        >
+                          {form.college}
+                        </Text>
+                      )}
+                    </View>
+
+                    <View
+                      style={[
+                        styles.divider,
+                        { backgroundColor: themeColors.border },
+                      ]}
+                    />
+
+                    <View style={styles.inputGroup}>
+                      <Text
+                        style={[
+                          styles.label,
+                          { color: themeColors.textSecondary },
+                        ]}
+                      >
+                        Course & Department
+                      </Text>
+                      {isEditing ? (
+                        <TextInput
+                          style={[
+                            styles.input,
+                            {
+                              backgroundColor: themeColors.inputBg,
+                              borderColor: themeColors.border,
+                              color: themeColors.textPrimary,
+                            },
+                          ]}
+                          value={form.course}
+                          onChangeText={(v) => setForm({ ...form, course: v })}
+                        />
+                      ) : (
+                        <Text
+                          style={[
+                            styles.val,
+                            { color: themeColors.textPrimary },
+                          ]}
+                        >
+                          {form.course} - {form.department}
+                        </Text>
+                      )}
+                    </View>
+
+                    <View
+                      style={[
+                        styles.divider,
+                        { backgroundColor: themeColors.border },
+                      ]}
+                    />
+
+                    <View style={styles.inputGroup}>
+                      <Text
+                        style={[
+                          styles.label,
+                          { color: themeColors.textSecondary },
+                        ]}
+                      >
+                        Academic Year
+                      </Text>
+                      {isEditing ? (
+                        <TextInput
+                          style={[
+                            styles.input,
+                            {
+                              backgroundColor: themeColors.inputBg,
+                              borderColor: themeColors.border,
+                              color: themeColors.textPrimary,
+                            },
+                          ]}
+                          value={form.year}
+                          onChangeText={(v) => setForm({ ...form, year: v })}
+                        />
+                      ) : (
+                        <Text
+                          style={[
+                            styles.val,
+                            { color: themeColors.textPrimary },
+                          ]}
+                        >
+                          {form.year}
+                        </Text>
+                      )}
+                    </View>
+                  </>
                 )}
-              </View>
 
-              <View style={styles.divider} />
+                <View
+                  style={[
+                    styles.divider,
+                    { backgroundColor: themeColors.border },
+                  ]}
+                />
 
-              {/* Phone Number */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Phone Number</Text>
-                {isEditing ? (
-                  <TextInput
-                    style={styles.input}
-                    value={form.phone}
-                    keyboardType="phone-pad"
-                    onChangeText={(v) => setForm({ ...form, phone: v })}
-                  />
-                ) : (
-                  <Text style={styles.val}>{form.phone}</Text>
-                )}
-              </View>
-
-              <View style={styles.divider} />
-
-              {/* Role Specific Details */}
-              {isBusiness ? (
-                <>
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Company / Business Name</Text>
+                {/* City & State */}
+                <View style={styles.rowFields}>
+                  <View
+                    style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}
+                  >
+                    <Text
+                      style={[
+                        styles.label,
+                        { color: themeColors.textSecondary },
+                      ]}
+                    >
+                      City
+                    </Text>
                     {isEditing ? (
                       <TextInput
-                        style={styles.input}
-                        value={form.companyName}
-                        onChangeText={(v) =>
-                          setForm({ ...form, companyName: v })
-                        }
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: themeColors.inputBg,
+                            borderColor: themeColors.border,
+                            color: themeColors.textPrimary,
+                          },
+                        ]}
+                        value={form.city}
+                        onChangeText={(v) => setForm({ ...form, city: v })}
                       />
                     ) : (
-                      <Text style={styles.val}>
-                        {form.companyName || "Tech Solutions"}
+                      <Text
+                        style={[styles.val, { color: themeColors.textPrimary }]}
+                      >
+                        {form.city}
                       </Text>
                     )}
                   </View>
 
-                  <View style={styles.divider} />
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Designation & Industry</Text>
+                  <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
+                    <Text
+                      style={[
+                        styles.label,
+                        { color: themeColors.textSecondary },
+                      ]}
+                    >
+                      State
+                    </Text>
                     {isEditing ? (
                       <TextInput
-                        style={styles.input}
-                        value={form.businessType}
-                        onChangeText={(v) =>
-                          setForm({ ...form, businessType: v })
-                        }
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: themeColors.inputBg,
+                            borderColor: themeColors.border,
+                            color: themeColors.textPrimary,
+                          },
+                        ]}
+                        value={form.state}
+                        onChangeText={(v) => setForm({ ...form, state: v })}
                       />
                     ) : (
-                      <Text style={styles.val}>
-                        {form.designation || "Founder"} -{" "}
-                        {form.businessType || "Software"}
+                      <Text
+                        style={[styles.val, { color: themeColors.textPrimary }]}
+                      >
+                        {form.state}
                       </Text>
                     )}
                   </View>
-                </>
+                </View>
+              </View>
+
+              {/* Save / Edit Bottom Button */}
+              {isEditing ? (
+                <TouchableOpacity
+                  style={[
+                    styles.saveBtn,
+                    { backgroundColor: themeColors.primary },
+                  ]}
+                  onPress={handleSave}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.saveBtnText}>Save Changes</Text>
+                  )}
+                </TouchableOpacity>
               ) : (
-                <>
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.label}>College / Institution</Text>
-                    {isEditing ? (
-                      <TextInput
-                        style={styles.input}
-                        value={form.college}
-                        onChangeText={(v) => setForm({ ...form, college: v })}
-                      />
-                    ) : (
-                      <Text style={styles.val}>{form.college}</Text>
-                    )}
-                  </View>
-
-                  <View style={styles.divider} />
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Course & Department</Text>
-                    {isEditing ? (
-                      <TextInput
-                        style={styles.input}
-                        value={form.course}
-                        onChangeText={(v) => setForm({ ...form, course: v })}
-                      />
-                    ) : (
-                      <Text style={styles.val}>
-                        {form.course} - {form.department}
-                      </Text>
-                    )}
-                  </View>
-
-                  <View style={styles.divider} />
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Academic Year</Text>
-                    {isEditing ? (
-                      <TextInput
-                        style={styles.input}
-                        value={form.year}
-                        onChangeText={(v) => setForm({ ...form, year: v })}
-                      />
-                    ) : (
-                      <Text style={styles.val}>{form.year}</Text>
-                    )}
-                  </View>
-                </>
+                <TouchableOpacity
+                  style={[
+                    styles.toggleEditBtn,
+                    {
+                      backgroundColor: themeColors.cardBg,
+                      borderColor: themeColors.border,
+                    },
+                  ]}
+                  onPress={() => setIsEditing(true)}
+                >
+                  <Ionicons
+                    name="create-outline"
+                    size={18}
+                    color={themeColors.primary}
+                  />
+                  <Text
+                    style={[
+                      styles.toggleEditText,
+                      { color: themeColors.primary },
+                    ]}
+                  >
+                    Edit Profile Details
+                  </Text>
+                </TouchableOpacity>
               )}
 
-              <View style={styles.divider} />
-
-              {/* City & State */}
-              <View style={styles.rowFields}>
-                <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
-                  <Text style={styles.label}>City</Text>
-                  {isEditing ? (
-                    <TextInput
-                      style={styles.input}
-                      value={form.city}
-                      onChangeText={(v) => setForm({ ...form, city: v })}
-                    />
-                  ) : (
-                    <Text style={styles.val}>{form.city}</Text>
-                  )}
-                </View>
-
-                <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
-                  <Text style={styles.label}>State</Text>
-                  {isEditing ? (
-                    <TextInput
-                      style={styles.input}
-                      value={form.state}
-                      onChangeText={(v) => setForm({ ...form, state: v })}
-                    />
-                  ) : (
-                    <Text style={styles.val}>{form.state}</Text>
-                  )}
-                </View>
-              </View>
-            </View>
-
-            {/* Save / Edit Bottom Button */}
-            {isEditing ? (
-              <TouchableOpacity
-                style={styles.saveBtn}
-                onPress={handleSave}
-                disabled={saving}
-              >
-                {saving ? (
-                  <ActivityIndicator color={COLORS.textWhite} />
-                ) : (
-                  <Text style={styles.saveBtnText}>Save Changes</Text>
-                )}
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={styles.toggleEditBtn}
-                onPress={() => setIsEditing(true)}
-              >
-                <Ionicons
-                  name="create-outline"
-                  size={18}
-                  color={COLORS.primary}
-                />
-                <Text style={styles.toggleEditText}>Edit Profile Details</Text>
-              </TouchableOpacity>
-            )}
-
-            <View style={{ height: 120 }} />
-          </>
-        )}
-      </ScrollView>
+              <View style={{ height: 120 }} />
+            </>
+          )}
+        </ScrollView>
+      </View>
 
       {/* Bottom Navigation Bar */}
       <BottomNavbar />
@@ -385,11 +721,13 @@ export default function AccountInfoScreen() {
 }
 
 const styles = StyleSheet.create({
+  mainWrapper: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
     paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingTop: 10,
   },
   header: {
     flexDirection: "row",
@@ -401,14 +739,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.cardBg,
     borderWidth: 1,
-    borderColor: COLORS.border,
     alignItems: "center",
     justifyContent: "center",
   },
   headerTitle: {
-    color: COLORS.textPrimary,
     fontSize: 18,
     fontFamily: FONTS.bold,
   },
@@ -416,35 +751,32 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: COLORS.cardBg,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   editHeaderBtnText: {
-    color: COLORS.primary,
     fontSize: 12,
     fontFamily: FONTS.bold,
   },
   card: {
-    backgroundColor: COLORS.cardBg,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: 16,
     padding: 20,
     alignItems: "center",
     marginBottom: 20,
+    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
   },
   avatarWrapper: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: COLORS.secondaryLight,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 10,
   },
   userName: {
-    color: COLORS.textPrimary,
     fontSize: 18,
     fontFamily: FONTS.bold,
   },
@@ -455,7 +787,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   roleTag: {
-    color: COLORS.primary,
     fontSize: 11,
     fontFamily: FONTS.bold,
   },
@@ -469,20 +800,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   verifiedText: {
-    color: COLORS.success,
+    color: "#22C55E",
     fontSize: 10,
     fontFamily: FONTS.bold,
   },
   infoCard: {
-    backgroundColor: COLORS.cardBg,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: 16,
     padding: 18,
     marginBottom: 20,
   },
   sectionHeaderTitle: {
-    color: COLORS.primary,
     fontSize: 14,
     fontFamily: FONTS.bold,
     marginBottom: 14,
@@ -494,40 +822,33 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   label: {
-    color: COLORS.textSecondary,
     fontSize: 11,
     fontFamily: FONTS.medium,
     marginBottom: 4,
   },
   val: {
-    color: COLORS.textPrimary,
     fontSize: 14,
     fontFamily: FONTS.bold,
   },
   input: {
-    backgroundColor: COLORS.background,
-    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    color: COLORS.textPrimary,
     fontSize: 13,
     fontFamily: FONTS.medium,
   },
   divider: {
     height: 1,
-    backgroundColor: COLORS.border,
     marginVertical: 10,
   },
   saveBtn: {
-    backgroundColor: COLORS.primary,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
   },
   saveBtnText: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontSize: 14,
     fontFamily: FONTS.bold,
   },
@@ -536,14 +857,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.border,
     borderWidth: 1,
     paddingVertical: 12,
     borderRadius: 12,
   },
   toggleEditText: {
-    color: COLORS.primary,
     fontSize: 14,
     fontFamily: FONTS.bold,
   },

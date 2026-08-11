@@ -2,21 +2,27 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-// மாற்றப்பட்ட import வரி:
-import { COLORS } from "../constants/colors";
+import { FONTS } from "../constants/fonts";
+import { useTheme } from "../constants/ThemeContext";
 import { forgotPasswordAPI } from "../services/auth";
+
+const STATUSBAR_HEIGHT =
+  Platform.OS === "android" ? StatusBar.currentHeight || 28 : 44;
 
 export default function ForgotPassword() {
   const router = useRouter();
+  const { isDarkMode, themeColors } = useTheme();
+
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -45,80 +51,137 @@ export default function ForgotPassword() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons
-          name="arrow-back"
-          size={24}
-          color={COLORS.primary} // இப்போது சரியாக வேலை செய்யும்
-        />
-      </TouchableOpacity>
+    <View
+      style={[styles.mainWrapper, { backgroundColor: themeColors.background }]}
+    >
+      <StatusBar
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      <View
+        style={{
+          height: STATUSBAR_HEIGHT,
+          backgroundColor: themeColors.background,
+        }}
+      />
 
-      <View style={styles.content}>
-        <Text style={styles.title}>Forgot Password?</Text>
-        <Text style={styles.subtitle}>
-          Enter your registered email address and we'll send you a password
-          reset link.
-        </Text>
-
-        <Text style={styles.label}>Email Address</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="example@domain.com"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
+      <View
+        style={[styles.container, { backgroundColor: themeColors.background }]}
+      >
         <TouchableOpacity
-          style={styles.button}
-          onPress={handleSendLink}
-          disabled={loading}
+          style={[
+            styles.backButton,
+            {
+              backgroundColor: themeColors.cardBg,
+              borderColor: themeColors.border,
+            },
+          ]}
+          onPress={() => router.back()}
         >
-          {loading ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <Text style={styles.buttonText}>Send Reset Link</Text>
-          )}
+          <Ionicons name="arrow-back" size={22} color={themeColors.primary} />
         </TouchableOpacity>
+
+        <View style={styles.content}>
+          <Text style={[styles.title, { color: themeColors.textPrimary }]}>
+            Forgot Password?
+          </Text>
+          <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
+            Enter your registered email address and we'll send you a password
+            reset link.
+          </Text>
+
+          <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+            Email Address
+          </Text>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: themeColors.inputBg,
+                borderColor: themeColors.border,
+                color: themeColors.textPrimary,
+              },
+            ]}
+            placeholder="example@domain.com"
+            placeholderTextColor={themeColors.placeholder}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: themeColors.primary }]}
+            onPress={handleSendLink}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFF" />
+            ) : (
+              <Text style={styles.buttonText}>Send Reset Link</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8FAFC", paddingHorizontal: 20 },
-  backButton: { marginTop: 20, marginBottom: 10 },
-  content: { marginTop: 30 },
+  mainWrapper: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  content: {
+    marginTop: 10,
+  },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
-    color: "#0A3D91",
+    fontFamily: FONTS.bold,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: "#64748B",
+    fontFamily: FONTS.regular,
     marginBottom: 24,
     lineHeight: 20,
   },
-  label: { fontSize: 14, fontWeight: "600", color: "#334155", marginBottom: 8 },
+  label: {
+    fontSize: 14,
+    fontFamily: FONTS.medium,
+    marginBottom: 8,
+  },
   input: {
-    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
+    fontFamily: FONTS.regular,
     marginBottom: 20,
   },
   button: {
-    backgroundColor: "#0A3D91",
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: "center",
   },
-  buttonText: { color: "#FFFFFF", fontWeight: "bold", fontSize: 16 },
+  buttonText: {
+    color: "#FFFFFF",
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+  },
 });

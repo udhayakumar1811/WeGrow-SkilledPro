@@ -2,18 +2,24 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
   Alert,
+  Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import BottomNavbar from "../../components/common/BottomNavbar";
-import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
+import { useTheme } from "../../constants/ThemeContext";
+
+const STATUSBAR_HEIGHT =
+  Platform.OS === "android" ? StatusBar.currentHeight || 28 : 44;
 
 export default function MembershipScreen() {
   const router = useRouter();
+  const { isDarkMode, themeColors } = useTheme();
 
   const handleBuyPass = (passTitle, price) => {
     Alert.alert(
@@ -25,7 +31,9 @@ export default function MembershipScreen() {
           text: "Proceed to Pay",
           onPress: () =>
             router.push(
-              `/payment?id=PASS_MONTHLY&amount=${price}&title=${encodeURIComponent(passTitle)}`,
+              `/payment?id=PASS_MONTHLY&amount=${price}&title=${encodeURIComponent(
+                passTitle,
+              )}`,
             ),
         },
       ],
@@ -33,11 +41,33 @@ export default function MembershipScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View
+      style={[styles.mainWrapper, { backgroundColor: themeColors.background }]}
+    >
+      <StatusBar
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      {/* Safe Area Spacer for Status Bar */}
+      <View
+        style={{
+          height: STATUSBAR_HEIGHT,
+          backgroundColor: themeColors.background,
+        }}
+      />
+
+      <ScrollView
+        style={[styles.container, { backgroundColor: themeColors.background }]}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Monthly Offline Pass</Text>
+          <Text
+            style={[styles.headerTitle, { color: themeColors.textPrimary }]}
+          >
+            Monthly Offline Pass
+          </Text>
         </View>
 
         {/* Highlight Card */}
@@ -47,15 +77,25 @@ export default function MembershipScreen() {
           </View>
           <Text style={styles.passCardTitle}>WeGrow Offline Pass</Text>
           <Text style={styles.passCardSub}>
-            Attend all Student & Business Workshops in Madurai & Sivakasi
+            Attend all Student & Business Workshops in Madurai &amp; Sivakasi
             without paying every session!
           </Text>
           <Text style={styles.passPrice}>₹1,999 / month</Text>
         </View>
 
         {/* Benefits Section */}
-        <Text style={styles.sectionTitle}>Pass Benefits</Text>
-        <View style={styles.benefitsList}>
+        <Text style={[styles.sectionTitle, { color: themeColors.textPrimary }]}>
+          Pass Benefits
+        </Text>
+        <View
+          style={[
+            styles.benefitsList,
+            {
+              backgroundColor: themeColors.cardBg,
+              borderColor: themeColors.border,
+            },
+          ]}
+        >
           {[
             "Free Seat Reservation in all Workshops",
             "Priority Front Row Seating",
@@ -65,18 +105,22 @@ export default function MembershipScreen() {
           ].map((benefit, idx) => (
             <View key={idx} style={styles.benefitItem}>
               <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
-              <Text style={styles.benefitText}>{benefit}</Text>
+              <Text
+                style={[styles.benefitText, { color: themeColors.textPrimary }]}
+              >
+                {benefit}
+              </Text>
             </View>
           ))}
         </View>
 
         {/* Purchase Pass Action */}
         <TouchableOpacity
-          style={styles.buyPassBtn}
+          style={[styles.buyPassBtn, { backgroundColor: themeColors.primary }]}
           onPress={() => handleBuyPass("Monthly Offline Pass", "1999")}
         >
           <Text style={styles.buyPassText}>Get Monthly Pass (₹1,999)</Text>
-          <Ionicons name="arrow-forward" size={16} color={COLORS.textWhite} />
+          <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
         </TouchableOpacity>
 
         <View style={{ height: 100 }} />
@@ -88,11 +132,13 @@ export default function MembershipScreen() {
 }
 
 const styles = StyleSheet.create({
+  mainWrapper: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
     paddingHorizontal: 16,
-    paddingTop: 50,
+    paddingTop: 10,
   },
   header: {
     marginBottom: 16,
@@ -100,7 +146,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
   },
   heroPassCard: {
     backgroundColor: "#0F2C59",
@@ -142,16 +187,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
     marginBottom: 12,
   },
   benefitsList: {
     gap: 12,
-    backgroundColor: COLORS.cardBg,
     padding: 16,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
     marginBottom: 20,
   },
   benefitItem: {
@@ -162,20 +204,18 @@ const styles = StyleSheet.create({
   benefitText: {
     fontSize: 13,
     fontFamily: FONTS.medium,
-    color: COLORS.textPrimary,
     flex: 1,
   },
   buyPassBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.primary,
     paddingVertical: 14,
     borderRadius: 12,
     gap: 8,
   },
   buyPassText: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontSize: 14,
     fontFamily: FONTS.bold,
   },

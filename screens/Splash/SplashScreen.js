@@ -8,12 +8,13 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { COLORS } from "../../constants/colors";
+import { useTheme } from "../../constants/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
 export default function IndexSplashScreen() {
   const router = useRouter();
+  const { themeColors } = useTheme();
 
   // Animation Shared Values
   const opacity = useSharedValue(0);
@@ -46,9 +47,20 @@ export default function IndexSplashScreen() {
   });
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+    >
       {/* Main Square Logo in Center */}
-      <Animated.View style={[styles.logoContainer, logoAnimatedStyle]}>
+      <Animated.View
+        style={[
+          styles.logoContainer,
+          logoAnimatedStyle,
+          {
+            backgroundColor: themeColors.cardBg,
+            shadowColor: themeColors.primary,
+          },
+        ]}
+      >
         <Image
           source={require("../../assets/logo/logo_square.png")}
           style={styles.logo}
@@ -63,7 +75,6 @@ export default function IndexSplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background || "#F8FAFC",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -71,9 +82,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
-    backgroundColor: COLORS.cardBg || "#FFFFFF",
     borderRadius: 24,
-    shadowColor: COLORS.primary || "#0A3D91",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
     shadowRadius: 16,

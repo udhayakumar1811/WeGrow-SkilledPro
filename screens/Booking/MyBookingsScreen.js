@@ -13,16 +13,18 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import BottomNavbar from "../../components/common/BottomNavbar";
-import { COLORS } from "../../constants/colors";
-import { FONTS } from "../../constants/fonts";
-import { cancelBookingAPI, getMyBookingsAPI } from "../../services/booking";
+import BottomNavbar from "../components/common/BottomNavbar";
+import { FONTS } from "../constants/fonts";
+import { useTheme } from "../context/ThemeContext";
+import { cancelBookingAPI, getMyBookingsAPI } from "../services/booking";
 
 const STATUSBAR_HEIGHT =
   Platform.OS === "android" ? StatusBar.currentHeight || 28 : 44;
 
 export default function MyBookingsScreen() {
   const router = useRouter();
+  const { isDarkMode, themeColors } = useTheme();
+
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -81,46 +83,61 @@ export default function MyBookingsScreen() {
   };
 
   return (
-    <View style={styles.mainWrapper}>
+    <View
+      style={[styles.mainWrapper, { backgroundColor: themeColors.background }]}
+    >
       <StatusBar
-        barStyle="dark-content"
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
         backgroundColor="transparent"
         translucent={true}
       />
       {/* Dynamic Status Bar Safe Area Spacer */}
       <View
-        style={{ height: STATUSBAR_HEIGHT, backgroundColor: COLORS.background }}
+        style={{
+          height: STATUSBAR_HEIGHT,
+          backgroundColor: themeColors.background,
+        }}
       />
 
       <ScrollView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: themeColors.background }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[COLORS.primary]}
+            colors={[themeColors.primary]}
           />
         }
       >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
-            style={styles.backBtn}
+            style={[
+              styles.backBtn,
+              {
+                backgroundColor: themeColors.cardBg,
+                borderColor: themeColors.border,
+              },
+            ]}
             onPress={() => router.back()}
           >
-            <Ionicons name="arrow-back" size={20} color={COLORS.primary} />
+            <Ionicons name="arrow-back" size={20} color={themeColors.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>My Workshop Seats</Text>
+          <Text
+            style={[styles.headerTitle, { color: themeColors.textPrimary }]}
+          >
+            My Workshop Seats
+          </Text>
           <TouchableOpacity onPress={onRefresh}>
-            <Ionicons name="refresh" size={20} color={COLORS.primary} />
+            <Ionicons name="refresh" size={20} color={themeColors.primary} />
           </TouchableOpacity>
         </View>
 
         {loading ? (
           <ActivityIndicator
             size="large"
-            color={COLORS.primary}
+            color={themeColors.primary}
             style={{ marginTop: 40 }}
           />
         ) : bookings.length === 0 ? (
@@ -128,14 +145,23 @@ export default function MyBookingsScreen() {
             <Ionicons
               name="ticket-outline"
               size={48}
-              color={COLORS.placeholder}
+              color={themeColors.placeholder}
             />
-            <Text style={styles.noDataTitle}>No Active Bookings</Text>
-            <Text style={styles.noDataSub}>
+            <Text
+              style={[styles.noDataTitle, { color: themeColors.textPrimary }]}
+            >
+              No Active Bookings
+            </Text>
+            <Text
+              style={[styles.noDataSub, { color: themeColors.textSecondary }]}
+            >
               You haven't reserved seats for any workshop yet.
             </Text>
             <TouchableOpacity
-              style={styles.exploreBtn}
+              style={[
+                styles.exploreBtn,
+                { backgroundColor: themeColors.primary },
+              ]}
               onPress={() => router.push("/workshops")}
             >
               <Text style={styles.exploreBtnText}>Explore Workshops</Text>
@@ -145,14 +171,28 @@ export default function MyBookingsScreen() {
           bookings.map((item) => {
             const event = item.event || {};
             return (
-              <View key={item._id || item.id} style={styles.bookingCard}>
+              <View
+                key={item._id || item.id}
+                style={[
+                  styles.bookingCard,
+                  {
+                    backgroundColor: themeColors.cardBg,
+                    borderColor: themeColors.border,
+                  },
+                ]}
+              >
                 <View style={styles.statusRow}>
                   <View style={styles.statusBadge}>
                     <Text style={styles.statusText}>
                       {item.status || "CONFIRMED"}
                     </Text>
                   </View>
-                  <Text style={styles.bookingDate}>
+                  <Text
+                    style={[
+                      styles.bookingDate,
+                      { color: themeColors.textSecondary },
+                    ]}
+                  >
                     Booked on:{" "}
                     {new Date(item.createdAt || Date.now()).toLocaleDateString(
                       "en-IN",
@@ -160,17 +200,34 @@ export default function MyBookingsScreen() {
                   </Text>
                 </View>
 
-                <Text style={styles.workshopTitle}>
+                <Text
+                  style={[
+                    styles.workshopTitle,
+                    { color: themeColors.textPrimary },
+                  ]}
+                >
                   {event.title || "Offline Workshop"}
                 </Text>
-                <Text style={styles.locationText}>
+                <Text
+                  style={[
+                    styles.locationText,
+                    { color: themeColors.textSecondary },
+                  ]}
+                >
                   📍 {event.location || "Madurai Campus"}
                 </Text>
 
-                <View style={styles.divider} />
+                <View
+                  style={[
+                    styles.divider,
+                    { backgroundColor: themeColors.border },
+                  ]}
+                />
 
                 <View style={styles.cardFooter}>
-                  <Text style={styles.priceVal}>
+                  <Text
+                    style={[styles.priceVal, { color: themeColors.primary }]}
+                  >
                     Paid: ₹{event.price || 499}
                   </Text>
                   <TouchableOpacity
@@ -196,11 +253,9 @@ export default function MyBookingsScreen() {
 const styles = StyleSheet.create({
   mainWrapper: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
     paddingHorizontal: 16,
   },
   header: {
@@ -214,23 +269,18 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.cardBg,
     borderWidth: 1,
-    borderColor: COLORS.border,
     alignItems: "center",
     justifyContent: "center",
   },
   headerTitle: {
     fontSize: 18,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
   },
   bookingCard: {
-    backgroundColor: COLORS.cardBg,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
     marginBottom: 16,
   },
   statusRow: {
@@ -253,22 +303,18 @@ const styles = StyleSheet.create({
   bookingDate: {
     fontSize: 10,
     fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
   },
   workshopTitle: {
     fontSize: 16,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
   },
   locationText: {
     fontSize: 12,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
     marginTop: 4,
   },
   divider: {
     height: 1,
-    backgroundColor: COLORS.border,
     marginVertical: 12,
   },
   cardFooter: {
@@ -279,7 +325,6 @@ const styles = StyleSheet.create({
   priceVal: {
     fontSize: 14,
     fontFamily: FONTS.bold,
-    color: COLORS.primary,
   },
   cancelBtn: {
     backgroundColor: "#FEE2E2",
@@ -299,24 +344,21 @@ const styles = StyleSheet.create({
   noDataTitle: {
     fontSize: 16,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
     marginTop: 12,
   },
   noDataSub: {
     fontSize: 12,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
     marginTop: 4,
   },
   exploreBtn: {
-    backgroundColor: COLORS.primary,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
     marginTop: 16,
   },
   exploreBtnText: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontSize: 13,
     fontFamily: FONTS.bold,
   },

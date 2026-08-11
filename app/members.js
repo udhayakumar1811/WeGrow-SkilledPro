@@ -3,18 +3,24 @@ import { useFocusEffect, useRouter } from "expo-router";
 import React from "react";
 import {
   BackHandler,
+  Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import BottomNavbar from "../components/common/BottomNavbar";
-import { COLORS } from "../constants/colors";
 import { FONTS } from "../constants/fonts";
+import { useTheme } from "../constants/ThemeContext";
+
+const STATUSBAR_HEIGHT =
+  Platform.OS === "android" ? StatusBar.currentHeight || 28 : 44;
 
 export default function CommunityMembersRoute() {
   const router = useRouter();
+  const { isDarkMode, themeColors } = useTheme();
 
   // Hardware Back Button Handler
   useFocusEffect(
@@ -53,30 +59,94 @@ export default function CommunityMembersRoute() {
   ];
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={20} color={COLORS.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>WeGrow Community Members</Text>
-        <View style={{ width: 36 }} />
-      </View>
+    <View
+      style={[styles.mainWrapper, { backgroundColor: themeColors.background }]}
+    >
+      <StatusBar
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      {/* Safe Area Spacer for Status Bar */}
+      <View
+        style={{
+          height: STATUSBAR_HEIGHT,
+          backgroundColor: themeColors.background,
+        }}
+      />
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {members.map((item) => (
-          <View key={item.id} style={styles.memberCard}>
-            <View style={styles.avatarCircle}>
-              <Ionicons name="person" size={20} color={COLORS.primary} />
+      <View
+        style={[styles.container, { backgroundColor: themeColors.background }]}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={[
+              styles.backBtn,
+              {
+                backgroundColor: themeColors.cardBg,
+                borderColor: themeColors.border,
+              },
+            ]}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={20} color={themeColors.primary} />
+          </TouchableOpacity>
+          <Text
+            style={[styles.headerTitle, { color: themeColors.textPrimary }]}
+          >
+            WeGrow Community Members
+          </Text>
+          <View style={{ width: 36 }} />
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {members.map((item) => (
+            <View
+              key={item.id}
+              style={[
+                styles.memberCard,
+                {
+                  backgroundColor: themeColors.cardBg,
+                  borderColor: themeColors.border,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.avatarCircle,
+                  { backgroundColor: themeColors.secondaryLight },
+                ]}
+              >
+                <Ionicons name="person" size={20} color={themeColors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={[
+                    styles.memberName,
+                    { color: themeColors.textPrimary },
+                  ]}
+                >
+                  {item.name}
+                </Text>
+                <Text
+                  style={[styles.memberRole, { color: themeColors.secondary }]}
+                >
+                  {item.role}
+                </Text>
+                <Text
+                  style={[
+                    styles.memberCity,
+                    { color: themeColors.textSecondary },
+                  ]}
+                >
+                  📍 {item.city}
+                </Text>
+              </View>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.memberName}>{item.name}</Text>
-              <Text style={styles.memberRole}>{item.role}</Text>
-              <Text style={styles.memberCity}>📍 {item.city}</Text>
-            </View>
-          </View>
-        ))}
-        <View style={{ height: 120 }} />
-      </ScrollView>
+          ))}
+          <View style={{ height: 120 }} />
+        </ScrollView>
+      </View>
 
       {/* Bottom Navigation Bar */}
       <BottomNavbar />
@@ -85,11 +155,13 @@ export default function CommunityMembersRoute() {
 }
 
 const styles = StyleSheet.create({
+  mainWrapper: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
     paddingHorizontal: 16,
-    paddingTop: 50,
+    paddingTop: 10,
   },
   header: {
     flexDirection: "row",
@@ -101,50 +173,41 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.cardBg,
     borderWidth: 1,
-    borderColor: COLORS.border,
     alignItems: "center",
     justifyContent: "center",
   },
   headerTitle: {
     fontSize: 16,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
   },
   memberCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: COLORS.cardBg,
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.border,
     marginBottom: 10,
   },
   avatarCircle: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: COLORS.secondaryLight,
     alignItems: "center",
     justifyContent: "center",
   },
   memberName: {
     fontSize: 14,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
   },
   memberRole: {
     fontSize: 12,
     fontFamily: FONTS.medium,
-    color: COLORS.secondary,
   },
   memberCity: {
     fontSize: 10,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
     marginTop: 2,
   },
 });

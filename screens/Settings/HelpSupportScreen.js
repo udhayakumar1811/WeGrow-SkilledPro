@@ -6,7 +6,9 @@ import {
   Alert,
   BackHandler,
   Linking,
+  Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -14,18 +16,22 @@ import {
   View,
 } from "react-native";
 import BottomNavbar from "../../components/common/BottomNavbar";
-import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
-import { API } from "../../services/api"; // உங்களுடைய API instance அல்லது axios file
+import { useTheme } from "../../constants/ThemeContext";
+import { API } from "../../services/api";
+
+const STATUSBAR_HEIGHT =
+  Platform.OS === "android" ? StatusBar.currentHeight || 28 : 44;
 
 export default function HelpSupportScreen() {
   const router = useRouter();
+  const { isDarkMode, themeColors } = useTheme();
 
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     mobileNumber: "",
-    queryAbout: ["COURSE"], // Array format as expected by API
+    queryAbout: ["COURSE"],
     query: "",
   });
 
@@ -58,7 +64,6 @@ export default function HelpSupportScreen() {
     }
   };
 
-  // Toggle Checkbox selection for queryAbout Array
   const toggleQueryAbout = (type) => {
     let updated = [...formData.queryAbout];
     if (updated.includes(type)) {
@@ -71,7 +76,6 @@ export default function HelpSupportScreen() {
     setFormData({ ...formData, queryAbout: updated });
   };
 
-  // Submit Contact Form API Integration
   const handleFormSubmit = async () => {
     if (!formData.fullName || !formData.mobileNumber || !formData.query) {
       Alert.alert(
@@ -83,7 +87,6 @@ export default function HelpSupportScreen() {
 
     setSubmitting(true);
     try {
-      // Calling POST /api/v1/contact API
       const response = await API.post("/contact", {
         fullName: formData.fullName,
         email: formData.email,
@@ -121,34 +124,85 @@ export default function HelpSupportScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <View style={styles.container}>
+    <View
+      style={[styles.mainWrapper, { backgroundColor: themeColors.background }]}
+    >
+      <StatusBar
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      {/* Safe Area Spacer for Status Bar */}
+      <View
+        style={{
+          height: STATUSBAR_HEIGHT,
+          backgroundColor: themeColors.background,
+        }}
+      />
+
+      <View
+        style={[styles.container, { backgroundColor: themeColors.background }]}
+      >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
-            style={styles.backBtn}
+            style={[
+              styles.backBtn,
+              {
+                backgroundColor: themeColors.cardBg,
+                borderColor: themeColors.border,
+              },
+            ]}
             onPress={() => router.back()}
           >
-            <Ionicons name="arrow-back" size={22} color={COLORS.primary} />
+            <Ionicons name="arrow-back" size={22} color={themeColors.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Help & Support</Text>
+          <Text
+            style={[styles.headerTitle, { color: themeColors.textPrimary }]}
+          >
+            Help & Support
+          </Text>
           <View style={{ width: 40 }} />
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Send Us a Direct Message */}
-          <View style={styles.directMessageCard}>
-            <Text style={styles.directMessageTitle}>
+          <View
+            style={[
+              styles.directMessageCard,
+              {
+                backgroundColor: themeColors.cardBg,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.directMessageTitle,
+                { color: themeColors.textPrimary },
+              ]}
+            >
               Send Us a Direct Message
             </Text>
 
             <View style={styles.inputRow}>
               <View style={styles.flexInputWrapper}>
-                <Text style={styles.label}>Your Full Name *</Text>
+                <Text
+                  style={[styles.label, { color: themeColors.textSecondary }]}
+                >
+                  Your Full Name *
+                </Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: themeColors.inputBg,
+                      borderColor: themeColors.border,
+                      color: themeColors.textPrimary,
+                    },
+                  ]}
                   placeholder="Enter your name"
-                  placeholderTextColor={COLORS.placeholder}
+                  placeholderTextColor={themeColors.placeholder}
                   value={formData.fullName}
                   onChangeText={(text) =>
                     setFormData({ ...formData, fullName: text })
@@ -156,11 +210,22 @@ export default function HelpSupportScreen() {
                 />
               </View>
               <View style={styles.flexInputWrapper}>
-                <Text style={styles.label}>Email Address</Text>
+                <Text
+                  style={[styles.label, { color: themeColors.textSecondary }]}
+                >
+                  Email Address
+                </Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: themeColors.inputBg,
+                      borderColor: themeColors.border,
+                      color: themeColors.textPrimary,
+                    },
+                  ]}
                   placeholder="Enter your email"
-                  placeholderTextColor={COLORS.placeholder}
+                  placeholderTextColor={themeColors.placeholder}
                   keyboardType="email-address"
                   value={formData.email}
                   onChangeText={(text) =>
@@ -171,11 +236,22 @@ export default function HelpSupportScreen() {
             </View>
 
             <View style={styles.singleInputWrapper}>
-              <Text style={styles.label}>Your Mobile Number *</Text>
+              <Text
+                style={[styles.label, { color: themeColors.textSecondary }]}
+              >
+                Your Mobile Number *
+              </Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: themeColors.inputBg,
+                    borderColor: themeColors.border,
+                    color: themeColors.textPrimary,
+                  },
+                ]}
                 placeholder="9876543210"
-                placeholderTextColor={COLORS.placeholder}
+                placeholderTextColor={themeColors.placeholder}
                 keyboardType="phone-pad"
                 value={formData.mobileNumber}
                 onChangeText={(text) =>
@@ -184,7 +260,9 @@ export default function HelpSupportScreen() {
               />
             </View>
 
-            <Text style={styles.label}>Query About:</Text>
+            <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+              Query About:
+            </Text>
             <View style={styles.checkboxRow}>
               <TouchableOpacity
                 style={styles.checkboxItem}
@@ -197,9 +275,16 @@ export default function HelpSupportScreen() {
                       : "square-outline"
                   }
                   size={20}
-                  color={COLORS.primary}
+                  color={themeColors.primary}
                 />
-                <Text style={styles.checkboxLabel}>Business</Text>
+                <Text
+                  style={[
+                    styles.checkboxLabel,
+                    { color: themeColors.textPrimary },
+                  ]}
+                >
+                  Business
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -213,18 +298,36 @@ export default function HelpSupportScreen() {
                       : "square-outline"
                   }
                   size={20}
-                  color={COLORS.primary}
+                  color={themeColors.primary}
                 />
-                <Text style={styles.checkboxLabel}>Course</Text>
+                <Text
+                  style={[
+                    styles.checkboxLabel,
+                    { color: themeColors.textPrimary },
+                  ]}
+                >
+                  Course
+                </Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.singleInputWrapper}>
-              <Text style={styles.label}>How can we help you? *</Text>
+              <Text
+                style={[styles.label, { color: themeColors.textSecondary }]}
+              >
+                How can we help you? *
+              </Text>
               <TextInput
-                style={styles.textArea}
+                style={[
+                  styles.textArea,
+                  {
+                    backgroundColor: themeColors.inputBg,
+                    borderColor: themeColors.border,
+                    color: themeColors.textPrimary,
+                  },
+                ]}
                 placeholder="Type your query regarding bootcamps, workshops, or career guidance..."
-                placeholderTextColor={COLORS.placeholder}
+                placeholderTextColor={themeColors.placeholder}
                 multiline
                 value={formData.query}
                 onChangeText={(text) =>
@@ -234,12 +337,15 @@ export default function HelpSupportScreen() {
             </View>
 
             <TouchableOpacity
-              style={styles.submitQueryBtn}
+              style={[
+                styles.submitQueryBtn,
+                { backgroundColor: themeColors.primary },
+              ]}
               onPress={handleFormSubmit}
               disabled={submitting}
             >
               {submitting ? (
-                <ActivityIndicator color={COLORS.textWhite} />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text style={styles.submitQueryText}>Submit Query →</Text>
               )}
@@ -256,68 +362,140 @@ export default function HelpSupportScreen() {
 
           {/* Contact Cards */}
           <TouchableOpacity
-            style={styles.contactCard}
+            style={[
+              styles.contactCard,
+              {
+                backgroundColor: themeColors.cardBg,
+                borderColor: themeColors.border,
+              },
+            ]}
             onPress={() => openUrl("https://wa.me/919363337331")}
           >
             <FontAwesome5 name="whatsapp" size={24} color="#22C55E" />
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.contactTitle}>WhatsApp Support</Text>
-              <Text style={styles.contactVal}>+91 93633 37331</Text>
+              <Text
+                style={[
+                  styles.contactTitle,
+                  { color: themeColors.textSecondary },
+                ]}
+              >
+                WhatsApp Support
+              </Text>
+              <Text
+                style={[styles.contactVal, { color: themeColors.textPrimary }]}
+              >
+                +91 93633 37331
+              </Text>
             </View>
             <Ionicons
               name="chevron-forward"
               size={18}
-              color={COLORS.textSecondary}
+              color={themeColors.textSecondary}
             />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.contactCard}
+            style={[
+              styles.contactCard,
+              {
+                backgroundColor: themeColors.cardBg,
+                borderColor: themeColors.border,
+              },
+            ]}
             onPress={() => openUrl("mailto:wegrowskillcampus@gmail.com")}
           >
-            <Ionicons name="mail-outline" size={24} color={COLORS.primary} />
+            <Ionicons
+              name="mail-outline"
+              size={24}
+              color={themeColors.primary}
+            />
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.contactTitle}>Email Support</Text>
-              <Text style={styles.contactVal}>wegrowskillcampus@gmail.com</Text>
+              <Text
+                style={[
+                  styles.contactTitle,
+                  { color: themeColors.textSecondary },
+                ]}
+              >
+                Email Support
+              </Text>
+              <Text
+                style={[styles.contactVal, { color: themeColors.textPrimary }]}
+              >
+                wegrowskillcampus@gmail.com
+              </Text>
             </View>
             <Ionicons
               name="chevron-forward"
               size={18}
-              color={COLORS.textSecondary}
+              color={themeColors.textSecondary}
             />
           </TouchableOpacity>
 
           {/* Social Links */}
-          <Text style={styles.sectionTitle}>Connect With Us</Text>
+          <Text
+            style={[styles.sectionTitle, { color: themeColors.textPrimary }]}
+          >
+            Connect With Us
+          </Text>
           <View style={styles.socialRow}>
             <TouchableOpacity
-              style={styles.socialBtn}
+              style={[
+                styles.socialBtn,
+                {
+                  backgroundColor: themeColors.cardBg,
+                  borderColor: themeColors.border,
+                },
+              ]}
               onPress={() =>
                 openUrl("https://www.instagram.com/wegrowskillcampus/")
               }
             >
               <FontAwesome5 name="instagram" size={22} color="#E1306C" />
-              <Text style={styles.socialText}>Instagram</Text>
+              <Text
+                style={[styles.socialText, { color: themeColors.textPrimary }]}
+              >
+                Instagram
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.socialBtn}
+              style={[
+                styles.socialBtn,
+                {
+                  backgroundColor: themeColors.cardBg,
+                  borderColor: themeColors.border,
+                },
+              ]}
               onPress={() =>
                 openUrl("https://www.facebook.com/share/18xhrEHChh/")
               }
             >
               <FontAwesome5 name="facebook" size={22} color="#1877F2" />
-              <Text style={styles.socialText}>Facebook</Text>
+              <Text
+                style={[styles.socialText, { color: themeColors.textPrimary }]}
+              >
+                Facebook
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.socialBtn}
+              style={[
+                styles.socialBtn,
+                {
+                  backgroundColor: themeColors.cardBg,
+                  borderColor: themeColors.border,
+                },
+              ]}
               onPress={() =>
                 openUrl("https://www.linkedin.com/company/wegrow-skill-campus/")
               }
             >
               <FontAwesome5 name="linkedin" size={22} color="#0A66C2" />
-              <Text style={styles.socialText}>LinkedIn</Text>
+              <Text
+                style={[styles.socialText, { color: themeColors.textPrimary }]}
+              >
+                LinkedIn
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -332,11 +510,13 @@ export default function HelpSupportScreen() {
 }
 
 const styles = StyleSheet.create({
+  mainWrapper: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
     paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingTop: 10,
   },
   header: {
     flexDirection: "row",
@@ -348,27 +528,21 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.cardBg,
     borderWidth: 1,
-    borderColor: COLORS.border,
     alignItems: "center",
     justifyContent: "center",
   },
   headerTitle: {
-    color: COLORS.textPrimary,
     fontSize: 18,
     fontFamily: FONTS.bold,
   },
   directMessageCard: {
-    backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
   },
   directMessageTitle: {
-    color: COLORS.textPrimary,
     fontSize: 16,
     fontFamily: FONTS.bold,
     marginBottom: 14,
@@ -385,19 +559,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   label: {
-    color: COLORS.textSecondary,
     fontSize: 11,
     fontFamily: FONTS.medium,
     marginBottom: 4,
   },
   input: {
-    backgroundColor: COLORS.background,
-    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    color: COLORS.textPrimary,
     fontSize: 13,
     fontFamily: FONTS.regular,
   },
@@ -413,31 +583,26 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   checkboxLabel: {
-    color: COLORS.textPrimary,
     fontSize: 13,
     fontFamily: FONTS.medium,
   },
   textArea: {
-    backgroundColor: COLORS.background,
-    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 8,
     padding: 12,
     height: 90,
     textAlignVertical: "top",
-    color: COLORS.textPrimary,
     fontSize: 13,
     fontFamily: FONTS.regular,
   },
   submitQueryBtn: {
-    backgroundColor: COLORS.primary,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
     marginBottom: 8,
   },
   submitQueryText: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontSize: 14,
     fontFamily: FONTS.bold,
   },
@@ -454,8 +619,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
   },
   contactCard: {
-    backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 14,
     padding: 16,
@@ -464,18 +627,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   contactTitle: {
-    color: COLORS.textSecondary,
     fontSize: 11,
     fontFamily: FONTS.medium,
   },
   contactVal: {
-    color: COLORS.textPrimary,
     fontSize: 14,
     fontFamily: FONTS.bold,
     marginTop: 2,
   },
   sectionTitle: {
-    color: COLORS.textPrimary,
     fontSize: 15,
     fontFamily: FONTS.bold,
     marginTop: 10,
@@ -488,8 +648,6 @@ const styles = StyleSheet.create({
   },
   socialBtn: {
     flex: 1,
-    backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 12,
     paddingVertical: 14,
@@ -497,7 +655,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   socialText: {
-    color: COLORS.textPrimary,
     fontSize: 11,
     fontFamily: FONTS.bold,
   },

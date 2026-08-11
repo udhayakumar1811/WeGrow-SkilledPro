@@ -17,8 +17,8 @@ import {
   View,
 } from "react-native";
 import BottomNavbar from "../../components/common/BottomNavbar";
-import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
+import { useTheme } from "../../constants/ThemeContext"; // 👈 Fixed Path
 import { getAllEventsAPI } from "../../services/workshop";
 
 const STATUSBAR_HEIGHT =
@@ -26,6 +26,8 @@ const STATUSBAR_HEIGHT =
 
 export default function WorkshopScreen() {
   const router = useRouter();
+  const { isDarkMode, themeColors } = useTheme();
+
   const [workshops, setWorkshops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -127,34 +129,50 @@ export default function WorkshopScreen() {
   });
 
   return (
-    <View style={styles.mainWrapper}>
+    <View
+      style={[styles.mainWrapper, { backgroundColor: themeColors.background }]}
+    >
       <StatusBar
-        barStyle="dark-content"
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
         backgroundColor="transparent"
         translucent={true}
       />
       {/* Dynamic Status Bar Safe Area Spacer */}
       <View
-        style={{ height: STATUSBAR_HEIGHT, backgroundColor: COLORS.background }}
+        style={{
+          height: STATUSBAR_HEIGHT,
+          backgroundColor: themeColors.background,
+        }}
       />
 
       <ScrollView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: themeColors.background }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[COLORS.primary]}
+            colors={[themeColors.primary]}
           />
         }
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={handleBackPress}>
-            <Ionicons name="arrow-back" size={20} color={COLORS.primary} />
+          <TouchableOpacity
+            style={[
+              styles.backBtn,
+              {
+                backgroundColor: themeColors.cardBg,
+                borderColor: themeColors.border,
+              },
+            ]}
+            onPress={handleBackPress}
+          >
+            <Ionicons name="arrow-back" size={20} color={themeColors.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>
+          <Text
+            style={[styles.headerTitle, { color: themeColors.textPrimary }]}
+          >
             {userRole === "STUDENT"
               ? "Student Workshops"
               : userRole === "BUSINESS"
@@ -162,22 +180,30 @@ export default function WorkshopScreen() {
                 : "Offline Workshops"}
           </Text>
           <TouchableOpacity onPress={onRefresh}>
-            <Ionicons name="refresh" size={20} color={COLORS.primary} />
+            <Ionicons name="refresh" size={20} color={themeColors.primary} />
           </TouchableOpacity>
         </View>
 
         {/* Search Bar */}
-        <View style={styles.searchContainer}>
+        <View
+          style={[
+            styles.searchContainer,
+            {
+              backgroundColor: themeColors.cardBg,
+              borderColor: themeColors.border,
+            },
+          ]}
+        >
           <Ionicons
             name="search-outline"
             size={18}
-            color={COLORS.placeholder}
+            color={themeColors.placeholder}
             style={styles.searchIcon}
           />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: themeColors.textPrimary }]}
             placeholder="Search workshops in Madurai, AI, Python..."
-            placeholderTextColor={COLORS.placeholder}
+            placeholderTextColor={themeColors.placeholder}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -186,7 +212,7 @@ export default function WorkshopScreen() {
               <Ionicons
                 name="close-circle"
                 size={18}
-                color={COLORS.placeholder}
+                color={themeColors.placeholder}
               />
             </TouchableOpacity>
           )}
@@ -204,13 +230,24 @@ export default function WorkshopScreen() {
                 key={tab.value}
                 style={[
                   styles.filterBtn,
-                  selectedFilter === tab.value && styles.activeFilterBtn,
+                  {
+                    backgroundColor: themeColors.cardBg,
+                    borderColor: themeColors.border,
+                  },
+                  selectedFilter === tab.value && [
+                    styles.activeFilterBtn,
+                    {
+                      backgroundColor: themeColors.primary,
+                      borderColor: themeColors.primary,
+                    },
+                  ],
                 ]}
                 onPress={() => setSelectedFilter(tab.value)}
               >
                 <Text
                   style={[
                     styles.filterText,
+                    { color: themeColors.textSecondary },
                     selectedFilter === tab.value && styles.activeFilterText,
                   ]}
                 >
@@ -223,13 +260,20 @@ export default function WorkshopScreen() {
 
         {/* Active Role Indicator Banner */}
         {userRole && (
-          <View style={styles.roleBanner}>
+          <View
+            style={[
+              styles.roleBanner,
+              { backgroundColor: themeColors.secondaryLight },
+            ]}
+          >
             <Ionicons
               name="person-circle-outline"
               size={16}
-              color={COLORS.primary}
+              color={themeColors.primary}
             />
-            <Text style={styles.roleBannerText}>
+            <Text
+              style={[styles.roleBannerText, { color: themeColors.primary }]}
+            >
               Showing exclusive workshops for{" "}
               <Text style={{ fontFamily: FONTS.bold }}>{userRole}</Text> members
             </Text>
@@ -240,7 +284,7 @@ export default function WorkshopScreen() {
         {loading ? (
           <ActivityIndicator
             size="large"
-            color={COLORS.primary}
+            color={themeColors.primary}
             style={{ marginTop: 40 }}
           />
         ) : filteredWorkshops.length === 0 ? (
@@ -248,10 +292,16 @@ export default function WorkshopScreen() {
             <Ionicons
               name="search-outline"
               size={48}
-              color={COLORS.placeholder}
+              color={themeColors.placeholder}
             />
-            <Text style={styles.noDataTitle}>No workshops found</Text>
-            <Text style={styles.noDataSub}>
+            <Text
+              style={[styles.noDataTitle, { color: themeColors.textPrimary }]}
+            >
+              No workshops found
+            </Text>
+            <Text
+              style={[styles.noDataSub, { color: themeColors.textSecondary }]}
+            >
               {searchQuery
                 ? `No results matching "${searchQuery}"`
                 : userRole
@@ -263,7 +313,13 @@ export default function WorkshopScreen() {
           filteredWorkshops.map((item) => (
             <TouchableOpacity
               key={item._id || item.id}
-              style={styles.card}
+              style={[
+                styles.card,
+                {
+                  backgroundColor: themeColors.cardBg,
+                  borderColor: themeColors.border,
+                },
+              ]}
               activeOpacity={0.9}
               onPress={() => handleOpenDetails(item)}
             >
@@ -279,25 +335,47 @@ export default function WorkshopScreen() {
               />
 
               <View style={styles.typeBadge}>
-                <Text style={styles.typeBadgeText}>
+                <Text
+                  style={[styles.typeBadgeText, { color: themeColors.primary }]}
+                >
                   {item.type || "OFFLINE"}
                 </Text>
               </View>
 
               <View style={styles.cardBody}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardDesc} numberOfLines={2}>
+                <Text
+                  style={[styles.cardTitle, { color: themeColors.textPrimary }]}
+                >
+                  {item.title}
+                </Text>
+                <Text
+                  style={[
+                    styles.cardDesc,
+                    { color: themeColors.textSecondary },
+                  ]}
+                  numberOfLines={2}
+                >
                   {item.description}
                 </Text>
 
-                <View style={styles.infoGrid}>
+                <View
+                  style={[
+                    styles.infoGrid,
+                    { borderBottomColor: themeColors.border },
+                  ]}
+                >
                   <View style={styles.infoItem}>
                     <Ionicons
                       name="location-outline"
                       size={14}
-                      color={COLORS.secondary}
+                      color={themeColors.secondary}
                     />
-                    <Text style={styles.infoText}>
+                    <Text
+                      style={[
+                        styles.infoText,
+                        { color: themeColors.textSecondary },
+                      ]}
+                    >
                       {item.location || "Madurai"}
                     </Text>
                   </View>
@@ -306,9 +384,14 @@ export default function WorkshopScreen() {
                     <Ionicons
                       name="calendar-outline"
                       size={14}
-                      color={COLORS.secondary}
+                      color={themeColors.secondary}
                     />
-                    <Text style={styles.infoText}>
+                    <Text
+                      style={[
+                        styles.infoText,
+                        { color: themeColors.textSecondary },
+                      ]}
+                    >
                       {item.date
                         ? new Date(item.date).toLocaleDateString("en-IN", {
                             day: "numeric",
@@ -322,20 +405,33 @@ export default function WorkshopScreen() {
 
                 <View style={styles.actionRow}>
                   <View>
-                    <Text style={styles.priceLabel}>Seat Fee</Text>
-                    <Text style={styles.priceValue}>₹{item.price || 499}</Text>
+                    <Text
+                      style={[
+                        styles.priceLabel,
+                        { color: themeColors.textSecondary },
+                      ]}
+                    >
+                      Seat Fee
+                    </Text>
+                    <Text
+                      style={[
+                        styles.priceValue,
+                        { color: themeColors.primary },
+                      ]}
+                    >
+                      ₹{item.price || 499}
+                    </Text>
                   </View>
 
                   <TouchableOpacity
-                    style={styles.bookBtn}
+                    style={[
+                      styles.bookBtn,
+                      { backgroundColor: themeColors.primary },
+                    ]}
                     onPress={() => handleOpenDetails(item)}
                   >
                     <Text style={styles.bookBtnText}>Book Seat Now</Text>
-                    <Ionicons
-                      name="arrow-forward"
-                      size={14}
-                      color={COLORS.textWhite}
-                    />
+                    <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -354,11 +450,9 @@ export default function WorkshopScreen() {
 const styles = StyleSheet.create({
   mainWrapper: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
     paddingHorizontal: 16,
   },
   header: {
@@ -372,24 +466,19 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.cardBg,
     borderWidth: 1,
-    borderColor: COLORS.border,
     alignItems: "center",
     justifyContent: "center",
   },
   headerTitle: {
     fontSize: 18,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.cardBg,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.border,
     paddingHorizontal: 12,
     height: 44,
     marginBottom: 16,
@@ -401,7 +490,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontFamily: FONTS.regular,
-    color: COLORS.textPrimary,
   },
   filterRow: {
     flexDirection: "row",
@@ -412,29 +500,24 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: COLORS.cardBg,
     borderWidth: 1,
-    borderColor: COLORS.border,
     alignItems: "center",
   },
   activeFilterBtn: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+    borderWidth: 1,
   },
   filterText: {
     fontSize: 12,
     fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
   },
   activeFilterText: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontFamily: FONTS.bold,
   },
   roleBanner: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: COLORS.secondaryLight,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 10,
@@ -443,14 +526,11 @@ const styles = StyleSheet.create({
   roleBannerText: {
     fontSize: 12,
     fontFamily: FONTS.regular,
-    color: COLORS.primary,
   },
   card: {
-    backgroundColor: COLORS.cardBg,
     borderRadius: 16,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: COLORS.border,
     marginBottom: 18,
   },
   cardImage: {
@@ -469,7 +549,6 @@ const styles = StyleSheet.create({
   typeBadgeText: {
     fontSize: 10,
     fontFamily: FONTS.bold,
-    color: COLORS.primary,
   },
   cardBody: {
     padding: 16,
@@ -477,13 +556,11 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
     marginBottom: 6,
   },
   cardDesc: {
     fontSize: 12,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
     marginBottom: 12,
     lineHeight: 18,
   },
@@ -493,7 +570,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
   },
   infoItem: {
     flexDirection: "row",
@@ -503,7 +579,6 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 12,
     fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
   },
   actionRow: {
     flexDirection: "row",
@@ -513,18 +588,15 @@ const styles = StyleSheet.create({
   priceLabel: {
     fontSize: 10,
     fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
   },
   priceValue: {
     fontSize: 18,
     fontFamily: FONTS.bold,
-    color: COLORS.primary,
   },
   bookBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: COLORS.primary,
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 10,
@@ -532,7 +604,7 @@ const styles = StyleSheet.create({
   bookBtnText: {
     fontSize: 13,
     fontFamily: FONTS.bold,
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
   },
   noDataBox: {
     paddingVertical: 50,
@@ -541,13 +613,11 @@ const styles = StyleSheet.create({
   noDataTitle: {
     fontSize: 16,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
     marginTop: 12,
   },
   noDataSub: {
     fontSize: 12,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
     marginTop: 4,
     textAlign: "center",
   },

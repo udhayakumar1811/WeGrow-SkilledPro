@@ -14,8 +14,8 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
+import { useTheme } from "../../constants/ThemeContext"; // 👈 Fixed Path
 import { getEventByIdAPI } from "../../services/workshop";
 
 export default function WorkshopDetailsScreen() {
@@ -23,6 +23,7 @@ export default function WorkshopDetailsScreen() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
   const { id } = params;
+  const { isDarkMode, themeColors } = useTheme();
 
   const [eventData, setEventData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -77,28 +78,43 @@ export default function WorkshopDetailsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: themeColors.background },
+        ]}
+      >
         <StatusBar
-          barStyle="dark-content"
+          barStyle={isDarkMode ? "light-content" : "dark-content"}
           backgroundColor="transparent"
           translucent={true}
         />
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={themeColors.primary} />
       </View>
     );
   }
 
   if (!eventData) {
     return (
-      <View style={styles.loadingContainer}>
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: themeColors.background },
+        ]}
+      >
         <StatusBar
-          barStyle="dark-content"
+          barStyle={isDarkMode ? "light-content" : "dark-content"}
           backgroundColor="transparent"
           translucent={true}
         />
-        <Text style={styles.errorText}>Workshop details not found.</Text>
+        <Text style={[styles.errorText, { color: themeColors.textSecondary }]}>
+          Workshop details not found.
+        </Text>
         <TouchableOpacity
-          style={styles.backBtnFallback}
+          style={[
+            styles.backBtnFallback,
+            { backgroundColor: themeColors.primary },
+          ]}
           onPress={handleBackPress}
         >
           <Text style={styles.backBtnText}>Go Back</Text>
@@ -108,13 +124,18 @@ export default function WorkshopDetailsScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+    <View
+      style={[styles.mainWrapper, { backgroundColor: themeColors.background }]}
+    >
       <StatusBar
         barStyle="light-content"
         backgroundColor="transparent"
         translucent={true}
       />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={[styles.container, { backgroundColor: themeColors.background }]}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Banner Image */}
         <View style={styles.imageWrapper}>
           <Image
@@ -131,13 +152,18 @@ export default function WorkshopDetailsScreen() {
           <TouchableOpacity
             style={[
               styles.floatingBackBtn,
-              { top: Math.max(insets.top, 30) + 12 },
+              {
+                top: Math.max(insets.top, 30) + 12,
+                backgroundColor: themeColors.cardBg,
+              },
             ]}
             onPress={handleBackPress}
           >
-            <Ionicons name="arrow-back" size={20} color={COLORS.primary} />
+            <Ionicons name="arrow-back" size={20} color={themeColors.primary} />
           </TouchableOpacity>
-          <View style={styles.typeBadge}>
+          <View
+            style={[styles.typeBadge, { backgroundColor: themeColors.primary }]}
+          >
             <Text style={styles.typeBadgeText}>
               {eventData.type || "OFFLINE"}
             </Text>
@@ -146,7 +172,9 @@ export default function WorkshopDetailsScreen() {
 
         {/* Content Body */}
         <View style={styles.body}>
-          <Text style={styles.title}>{eventData.title}</Text>
+          <Text style={[styles.title, { color: themeColors.textPrimary }]}>
+            {eventData.title}
+          </Text>
 
           {/* Quick Meta Info */}
           <View style={styles.metaRow}>
@@ -154,9 +182,11 @@ export default function WorkshopDetailsScreen() {
               <Ionicons
                 name="location-outline"
                 size={16}
-                color={COLORS.secondary}
+                color={themeColors.secondary}
               />
-              <Text style={styles.metaText}>
+              <Text
+                style={[styles.metaText, { color: themeColors.textSecondary }]}
+              >
                 {eventData.location || "Madurai"}
               </Text>
             </View>
@@ -165,9 +195,11 @@ export default function WorkshopDetailsScreen() {
               <Ionicons
                 name="calendar-outline"
                 size={16}
-                color={COLORS.secondary}
+                color={themeColors.secondary}
               />
-              <Text style={styles.metaText}>
+              <Text
+                style={[styles.metaText, { color: themeColors.textSecondary }]}
+              >
                 {eventData.date
                   ? new Date(eventData.date).toLocaleDateString("en-IN", {
                       day: "numeric",
@@ -179,17 +211,30 @@ export default function WorkshopDetailsScreen() {
             </View>
           </View>
 
-          <View style={styles.divider} />
+          <View
+            style={[styles.divider, { backgroundColor: themeColors.border }]}
+          />
 
           {/* Description Section */}
-          <Text style={styles.sectionHeader}>About This Workshop</Text>
-          <Text style={styles.description}>
+          <Text
+            style={[styles.sectionHeader, { color: themeColors.textPrimary }]}
+          >
+            About This Workshop
+          </Text>
+          <Text
+            style={[styles.description, { color: themeColors.textSecondary }]}
+          >
             {eventData.description ||
               "Join this intensive offline workshop to gain hands-on practical skills, real-time project experience, and guidance from industry experts."}
           </Text>
 
           {/* Key Highlights */}
-          <Text style={[styles.sectionHeader, { marginTop: 20 }]}>
+          <Text
+            style={[
+              styles.sectionHeader,
+              { color: themeColors.textPrimary, marginTop: 20 },
+            ]}
+          >
             Key Highlights
           </Text>
           <View style={styles.bulletList}>
@@ -203,9 +248,16 @@ export default function WorkshopDetailsScreen() {
                 <Ionicons
                   name="checkmark-circle"
                   size={18}
-                  color={COLORS.primary}
+                  color={themeColors.primary}
                 />
-                <Text style={styles.bulletText}>{point}</Text>
+                <Text
+                  style={[
+                    styles.bulletText,
+                    { color: themeColors.textPrimary },
+                  ]}
+                >
+                  {point}
+                </Text>
               </View>
             ))}
           </View>
@@ -214,18 +266,33 @@ export default function WorkshopDetailsScreen() {
       </ScrollView>
 
       {/* Fixed Bottom Checkout Bar */}
-      <View style={styles.bottomBar}>
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            backgroundColor: themeColors.cardBg,
+            borderTopColor: themeColors.border,
+            paddingBottom: Math.max(insets.bottom, 14),
+          },
+        ]}
+      >
         <View>
-          <Text style={styles.priceLabel}>Seat Fee</Text>
-          <Text style={styles.priceValue}>₹{eventData.price || 499}</Text>
+          <Text
+            style={[styles.priceLabel, { color: themeColors.textSecondary }]}
+          >
+            Seat Fee
+          </Text>
+          <Text style={[styles.priceValue, { color: themeColors.primary }]}>
+            ₹{eventData.price || 499}
+          </Text>
         </View>
 
         <TouchableOpacity
-          style={styles.proceedBtn}
+          style={[styles.proceedBtn, { backgroundColor: themeColors.primary }]}
           onPress={handleProceedToPayment}
         >
           <Text style={styles.proceedBtnText}>Proceed to Book Seat</Text>
-          <Ionicons name="arrow-forward" size={16} color={COLORS.textWhite} />
+          <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
     </View>
@@ -233,26 +300,29 @@ export default function WorkshopDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
+  mainWrapper: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
-    backgroundColor: COLORS.background,
     justifyContent: "center",
     alignItems: "center",
   },
   errorText: {
     fontSize: 14,
     fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
     marginBottom: 12,
   },
   backBtnFallback: {
-    backgroundColor: COLORS.primary,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
   },
   backBtnText: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontSize: 12,
     fontFamily: FONTS.bold,
   },
@@ -271,7 +341,6 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 10,
@@ -281,13 +350,12 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 12,
     left: 16,
-    backgroundColor: COLORS.primary,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 6,
   },
   typeBadgeText: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontSize: 10,
     fontFamily: FONTS.bold,
   },
@@ -297,7 +365,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
     marginBottom: 12,
   },
   metaRow: {
@@ -312,23 +379,19 @@ const styles = StyleSheet.create({
   metaText: {
     fontSize: 13,
     fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
   },
   divider: {
     height: 1,
-    backgroundColor: COLORS.border,
     marginVertical: 18,
   },
   sectionHeader: {
     fontSize: 16,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
     marginBottom: 8,
   },
   description: {
     fontSize: 13,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
     lineHeight: 20,
   },
   bulletList: {
@@ -343,7 +406,6 @@ const styles = StyleSheet.create({
   bulletText: {
     fontSize: 13,
     fontFamily: FONTS.medium,
-    color: COLORS.textPrimary,
     flex: 1,
   },
   bottomBar: {
@@ -351,11 +413,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: COLORS.cardBg,
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -363,24 +423,21 @@ const styles = StyleSheet.create({
   priceLabel: {
     fontSize: 10,
     fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
   },
   priceValue: {
     fontSize: 20,
     fontFamily: FONTS.bold,
-    color: COLORS.primary,
   },
   proceedBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: COLORS.primary,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
   },
   proceedBtnText: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontSize: 14,
     fontFamily: FONTS.bold,
   },

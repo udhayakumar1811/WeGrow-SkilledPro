@@ -7,19 +7,26 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import { COLORS } from "../../constants/colors";
 import { FONTS } from "../../constants/fonts";
+import { useTheme } from "../../constants/ThemeContext"; // 👈 Fixed Path
 import { registerStudentAPI } from "../../services/auth";
+
+const STATUSBAR_HEIGHT =
+  Platform.OS === "android" ? StatusBar.currentHeight || 28 : 44;
 
 export default function StudentRegisterScreen() {
   const router = useRouter();
+  const { isDarkMode, themeColors } = useTheme();
+
   const [loading, setLoading] = useState(false);
   const [idCardImage, setIdCardImage] = useState(null);
 
@@ -80,7 +87,6 @@ export default function StudentRegisterScreen() {
 
     setLoading(true);
     try {
-      // Skills split into Array
       const skillsArray = form.skills
         ? form.skills.split(",").map((s) => s.trim())
         : ["React", "Node"];
@@ -132,239 +138,389 @@ export default function StudentRegisterScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
-      </TouchableOpacity>
+    <View
+      style={[styles.mainWrapper, { backgroundColor: themeColors.background }]}
+    >
+      <StatusBar
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      {/* Safe Area Spacer for Status Bar */}
+      <View
+        style={{
+          height: STATUSBAR_HEIGHT,
+          backgroundColor: themeColors.background,
+        }}
+      />
 
-      <Text style={styles.title}>Student Registration</Text>
-      <Text style={styles.subtitle}>
-        Enter your details & upload ID to join offline workshops at student
-        prices.
-      </Text>
+      <ScrollView
+        style={[styles.container, { backgroundColor: themeColors.background }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <TouchableOpacity
+          style={[
+            styles.backBtn,
+            {
+              backgroundColor: themeColors.cardBg,
+              borderColor: themeColors.border,
+            },
+          ]}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color={themeColors.primary} />
+        </TouchableOpacity>
 
-      {/* First Name & Last Name */}
-      <View style={styles.rowGroup}>
-        <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
-          <Text style={styles.label}>First Name *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="First Name"
-            placeholderTextColor={COLORS.placeholder}
-            value={form.firstName}
-            onChangeText={(v) => handleChange("firstName", v)}
-          />
-        </View>
+        <Text style={[styles.title, { color: themeColors.textPrimary }]}>
+          Student Registration
+        </Text>
+        <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
+          Enter your details &amp; upload ID to join offline workshops at
+          student prices.
+        </Text>
 
-        <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
-          <Text style={styles.label}>Last Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Last Name"
-            placeholderTextColor={COLORS.placeholder}
-            value={form.lastName}
-            onChangeText={(v) => handleChange("lastName", v)}
-          />
-        </View>
-      </View>
-
-      {/* Email Address */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Email Address *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. raj@gmail.com"
-          placeholderTextColor={COLORS.placeholder}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={form.email}
-          onChangeText={(v) => handleChange("email", v)}
-        />
-      </View>
-
-      {/* Password */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Password *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Create Password"
-          placeholderTextColor={COLORS.placeholder}
-          secureTextEntry
-          value={form.password}
-          onChangeText={(v) => handleChange("password", v)}
-        />
-      </View>
-
-      {/* Phone Number */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Phone Number *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="10 Digit Mobile Number"
-          placeholderTextColor={COLORS.placeholder}
-          keyboardType="phone-pad"
-          value={form.phone}
-          onChangeText={(v) => handleChange("phone", v)}
-        />
-      </View>
-
-      {/* College Name */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>College / Institution *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. Anna University"
-          placeholderTextColor={COLORS.placeholder}
-          value={form.college}
-          onChangeText={(v) => handleChange("college", v)}
-        />
-      </View>
-
-      {/* Course & Department */}
-      <View style={styles.rowGroup}>
-        <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
-          <Text style={styles.label}>Course / Degree</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. B.E CSE"
-            placeholderTextColor={COLORS.placeholder}
-            value={form.course}
-            onChangeText={(v) => handleChange("course", v)}
-          />
-        </View>
-
-        <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
-          <Text style={styles.label}>Department</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. CSE"
-            placeholderTextColor={COLORS.placeholder}
-            value={form.department}
-            onChangeText={(v) => handleChange("department", v)}
-          />
-        </View>
-      </View>
-
-      {/* Year & Skills */}
-      <View style={styles.rowGroup}>
-        <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
-          <Text style={styles.label}>Academic Year</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. 3rd Year"
-            placeholderTextColor={COLORS.placeholder}
-            value={form.year}
-            onChangeText={(v) => handleChange("year", v)}
-          />
-        </View>
-
-        <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
-          <Text style={styles.label}>Skills (Comma Separated)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. React, Node"
-            placeholderTextColor={COLORS.placeholder}
-            value={form.skills}
-            onChangeText={(v) => handleChange("skills", v)}
-          />
-        </View>
-      </View>
-
-      {/* College ID Card Photo Upload */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>College ID Card / Hall Ticket Photo *</Text>
-        <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
-          {idCardImage ? (
-            <Image
-              source={{ uri: idCardImage }}
-              style={styles.uploadedImage}
-              contentFit="cover"
+        {/* First Name & Last Name */}
+        <View style={styles.rowGroup}>
+          <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
+            <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+              First Name *
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: themeColors.inputBg,
+                  borderColor: themeColors.border,
+                  color: themeColors.textPrimary,
+                },
+              ]}
+              placeholder="First Name"
+              placeholderTextColor={themeColors.placeholder}
+              value={form.firstName}
+              onChangeText={(v) => handleChange("firstName", v)}
             />
-          ) : (
-            <View style={styles.uploadPlaceholder}>
-              <Ionicons
-                name="cloud-upload-outline"
-                size={28}
-                color={COLORS.primary}
+          </View>
+
+          <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
+            <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+              Last Name
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: themeColors.inputBg,
+                  borderColor: themeColors.border,
+                  color: themeColors.textPrimary,
+                },
+              ]}
+              placeholder="Last Name"
+              placeholderTextColor={themeColors.placeholder}
+              value={form.lastName}
+              onChangeText={(v) => handleChange("lastName", v)}
+            />
+          </View>
+        </View>
+
+        {/* Email Address */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+            Email Address *
+          </Text>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: themeColors.inputBg,
+                borderColor: themeColors.border,
+                color: themeColors.textPrimary,
+              },
+            ]}
+            placeholder="e.g. raj@gmail.com"
+            placeholderTextColor={themeColors.placeholder}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={form.email}
+            onChangeText={(v) => handleChange("email", v)}
+          />
+        </View>
+
+        {/* Password */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+            Password *
+          </Text>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: themeColors.inputBg,
+                borderColor: themeColors.border,
+                color: themeColors.textPrimary,
+              },
+            ]}
+            placeholder="Create Password"
+            placeholderTextColor={themeColors.placeholder}
+            secureTextEntry
+            value={form.password}
+            onChangeText={(v) => handleChange("password", v)}
+          />
+        </View>
+
+        {/* Phone Number */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+            Phone Number *
+          </Text>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: themeColors.inputBg,
+                borderColor: themeColors.border,
+                color: themeColors.textPrimary,
+              },
+            ]}
+            placeholder="10 Digit Mobile Number"
+            placeholderTextColor={themeColors.placeholder}
+            keyboardType="phone-pad"
+            value={form.phone}
+            onChangeText={(v) => handleChange("phone", v)}
+          />
+        </View>
+
+        {/* College Name */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+            College / Institution *
+          </Text>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: themeColors.inputBg,
+                borderColor: themeColors.border,
+                color: themeColors.textPrimary,
+              },
+            ]}
+            placeholder="e.g. Anna University"
+            placeholderTextColor={themeColors.placeholder}
+            value={form.college}
+            onChangeText={(v) => handleChange("college", v)}
+          />
+        </View>
+
+        {/* Course & Department */}
+        <View style={styles.rowGroup}>
+          <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
+            <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+              Course / Degree
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: themeColors.inputBg,
+                  borderColor: themeColors.border,
+                  color: themeColors.textPrimary,
+                },
+              ]}
+              placeholder="e.g. B.E CSE"
+              placeholderTextColor={themeColors.placeholder}
+              value={form.course}
+              onChangeText={(v) => handleChange("course", v)}
+            />
+          </View>
+
+          <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
+            <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+              Department
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: themeColors.inputBg,
+                  borderColor: themeColors.border,
+                  color: themeColors.textPrimary,
+                },
+              ]}
+              placeholder="e.g. CSE"
+              placeholderTextColor={themeColors.placeholder}
+              value={form.department}
+              onChangeText={(v) => handleChange("department", v)}
+            />
+          </View>
+        </View>
+
+        {/* Year & Skills */}
+        <View style={styles.rowGroup}>
+          <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
+            <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+              Academic Year
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: themeColors.inputBg,
+                  borderColor: themeColors.border,
+                  color: themeColors.textPrimary,
+                },
+              ]}
+              placeholder="e.g. 3rd Year"
+              placeholderTextColor={themeColors.placeholder}
+              value={form.year}
+              onChangeText={(v) => handleChange("year", v)}
+            />
+          </View>
+
+          <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
+            <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+              Skills (Comma Separated)
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: themeColors.inputBg,
+                  borderColor: themeColors.border,
+                  color: themeColors.textPrimary,
+                },
+              ]}
+              placeholder="e.g. React, Node"
+              placeholderTextColor={themeColors.placeholder}
+              value={form.skills}
+              onChangeText={(v) => handleChange("skills", v)}
+            />
+          </View>
+        </View>
+
+        {/* College ID Card Photo Upload */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+            College ID Card / Hall Ticket Photo *
+          </Text>
+          <TouchableOpacity
+            style={[
+              styles.uploadBox,
+              {
+                backgroundColor: themeColors.inputBg,
+                borderColor: themeColors.primary,
+              },
+            ]}
+            onPress={pickImage}
+          >
+            {idCardImage ? (
+              <Image
+                source={{ uri: idCardImage }}
+                style={styles.uploadedImage}
+                contentFit="cover"
               />
-              <Text style={styles.uploadText}>
-                Tap to Upload College ID Photo
-              </Text>
-            </View>
+            ) : (
+              <View style={styles.uploadPlaceholder}>
+                <Ionicons
+                  name="cloud-upload-outline"
+                  size={28}
+                  color={themeColors.primary}
+                />
+                <Text
+                  style={[styles.uploadText, { color: themeColors.primary }]}
+                >
+                  Tap to Upload College ID Photo
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* City & State */}
+        <View style={styles.rowGroup}>
+          <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
+            <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+              City
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: themeColors.inputBg,
+                  borderColor: themeColors.border,
+                  color: themeColors.textPrimary,
+                },
+              ]}
+              placeholder="Madurai"
+              placeholderTextColor={themeColors.placeholder}
+              value={form.city}
+              onChangeText={(v) => handleChange("city", v)}
+            />
+          </View>
+
+          <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
+            <Text style={[styles.label, { color: themeColors.textSecondary }]}>
+              State
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: themeColors.inputBg,
+                  borderColor: themeColors.border,
+                  color: themeColors.textPrimary,
+                },
+              ]}
+              placeholder="Tamil Nadu"
+              placeholderTextColor={themeColors.placeholder}
+              value={form.state}
+              onChangeText={(v) => handleChange("state", v)}
+            />
+          </View>
+        </View>
+
+        {/* Submit Button */}
+        <TouchableOpacity
+          style={[styles.submitBtn, { backgroundColor: themeColors.primary }]}
+          onPress={handleRegister}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color={themeColors.textWhite} />
+          ) : (
+            <Text style={styles.submitBtnText}>
+              Register &amp; Submit for Verification
+            </Text>
           )}
         </TouchableOpacity>
-      </View>
 
-      {/* City & State */}
-      <View style={styles.rowGroup}>
-        <View style={[styles.inputGroup, { flex: 1, marginRight: 6 }]}>
-          <Text style={styles.label}>City</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Madurai"
-            placeholderTextColor={COLORS.placeholder}
-            value={form.city}
-            onChangeText={(v) => handleChange("city", v)}
-          />
-        </View>
-
-        <View style={[styles.inputGroup, { flex: 1, marginLeft: 6 }]}>
-          <Text style={styles.label}>State</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Tamil Nadu"
-            placeholderTextColor={COLORS.placeholder}
-            value={form.state}
-            onChangeText={(v) => handleChange("state", v)}
-          />
-        </View>
-      </View>
-
-      {/* Submit Button */}
-      <TouchableOpacity
-        style={styles.submitBtn}
-        onPress={handleRegister}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color={COLORS.textWhite} />
-        ) : (
-          <Text style={styles.submitBtnText}>
-            Register & Submit for Verification
-          </Text>
-        )}
-      </TouchableOpacity>
-
-      <View style={{ height: 60 }} />
-    </ScrollView>
+        <View style={{ height: 60 }} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  mainWrapper: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
     paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingTop: 10,
   },
   backBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.cardBg,
     borderWidth: 1,
-    borderColor: COLORS.border,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
   },
   title: {
-    color: COLORS.textPrimary,
     fontSize: 22,
     fontFamily: FONTS.bold,
   },
   subtitle: {
-    color: COLORS.textSecondary,
     fontSize: 13,
     fontFamily: FONTS.regular,
     marginTop: 4,
@@ -377,25 +533,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   label: {
-    color: COLORS.textSecondary,
     fontSize: 12,
     fontFamily: FONTS.medium,
     marginBottom: 6,
   },
   input: {
-    backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    color: COLORS.textPrimary,
     fontSize: 14,
     fontFamily: FONTS.regular,
   },
   uploadBox: {
-    backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.primary,
     borderWidth: 1,
     borderStyle: "dashed",
     borderRadius: 12,
@@ -409,7 +559,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   uploadText: {
-    color: COLORS.primary,
     fontSize: 12,
     fontFamily: FONTS.medium,
   },
@@ -418,14 +567,13 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   submitBtn: {
-    backgroundColor: COLORS.primary,
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: "center",
     marginTop: 10,
   },
   submitBtnText: {
-    color: COLORS.textWhite,
+    color: "#FFFFFF",
     fontSize: 15,
     fontFamily: FONTS.bold,
   },
