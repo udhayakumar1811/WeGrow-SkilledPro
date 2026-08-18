@@ -7,26 +7,22 @@
     "orientation": "portrait",
     "icon": "./assets/logo/logo_square.png",
     "userInterfaceStyle": "light",
-
     "splash": {
       "image": "./assets/logo/logo_square.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.wegrowworkshop.wegrowskillcampus"
     },
-
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo/logo_adaptive_foreground.png",
         "backgroundColor": "#ffffff"
       },
-      "usesCleartextTraffic": true,
       "package": "com.wegrowworkshop.wegrowskillcampus"
     },
-
     "plugins": [
       "expo-router",
       [
@@ -42,16 +38,12 @@
         {
           "android": {
             "usesCleartextTraffic": true
+          },
+          "ios": {
+            "usesCleartextTraffic": true
           }
         }
       ]
-    ],
-
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "d0aafb5b-8bd1-4128-953a-3980768a3139"
-      }
-    }
+    ]
   }
 }
