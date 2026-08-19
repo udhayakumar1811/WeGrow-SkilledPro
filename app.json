@@ -1,23 +1,20 @@
 {
   "expo": {
     "name": "WeGrow B School",
-    "slug": "wegrow-skill-campus",
+    "slug": "wegrow-b-school",
     "version": "1.0.5",
     "scheme": "wegrow",
     "orientation": "portrait",
     "icon": "./assets/logo/logo_square.png",
     "userInterfaceStyle": "light",
-
     "splash": {
       "image": "./assets/logo/logo_square.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-
     "ios": {
       "supportsTablet": true
     },
-
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo/logo_adaptive_foreground.png",
@@ -26,7 +23,6 @@
       "usesCleartextTraffic": true,
       "package": "com.wegrowworkshop.wegrowskillcampus"
     },
-
     "plugins": [
       "expo-router",
       [
@@ -46,12 +42,12 @@
         }
       ]
     ],
-
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "d0aafb5b-8bd1-4128-953a-3980768a3139"
+        "projectId": "4b8dade2-895b-4873-be76-7f3ebe126ccb"
       }
-    }
+    },
+    "owner": "wegrowbschool"
   }
 }
