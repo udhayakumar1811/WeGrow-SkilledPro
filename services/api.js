@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
 // AWS EC2 Deployed Live Backend Base URL
-export const BASE_URL = "http://13.239.234.181:4000/api/v1";
+export const BASE_URL = "https://wegrow-connect-backend-1.onrender.com/api/v1";
 
 const API = axios.create({
   baseURL: BASE_URL,
